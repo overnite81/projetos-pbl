@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTTP Explorer - Métodos HTTP na Prática</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        httpGet: '#10B981',
+                        httpPost: '#3B82F6',
+                        httpPut: '#F59E0B',
+                        httpPatch: '#8B5CF6',
+                        httpDelete: '#EF4444'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome para Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        code, pre { font-family: 'Fira Code', monospace; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(71, 85, 105, 1); }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
+
+    <!-- Header principal -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-tr from-blue-600 to-indigo-500 p-2 rounded-lg text-white font-bold shadow-lg shadow-blue-500/20">
+                    <i class="fa-solid font-mono text-xl">&lt;/&gt;</i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">HTTP Explorer</h1>
+                    <p class="text-xs text-slate-400 hidden sm:block">Laboratório Prático e Guia Didático de Métodos HTTP</p>
+                </div>
+            </div>
+
+            <!-- Mode Selector / Toggle Local vs Real API -->
+            <div class="flex items-center gap-3">
+                <div class="flex items-center bg-slate-950 border border-slate-800 rounded-lg p-1">
+                    <button id="modeMockBtn" onclick="switchApiMode('mock')" class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 bg-blue-600 text-white shadow">
+                        <i class="fa-solid fa-server"></i>
+                        <span>Simulador Local (Mock)</span>
+                    </button>
+                    <button id="modeRealBtn" onclick="switchApiMode('real')" class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
+                        <i class="fa-solid fa-globe"></i>
+                        <span>API Real (JSONPlaceholder)</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+
+        <!-- Banner de Status da API Selecionada -->
+        <div id="apiModeBanner" class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <span id="apiModeDot" class="relative flex h-3 w-3">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                </span>
+                <div>
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Modo Atual:</span>
+                    <h2 id="apiModeTitle" class="font-bold text-slate-200">Simulador de Estoque Local (In-Memory)</h2>
+                    <p id="apiModeDesc" class="text-xs text-slate-400">As operações afetam o banco de dados local da aplicação em tempo real com rápida resposta.</p>
+                </div>
+            </div>
+            <div class="text-xs text-slate-400 font-mono bg-slate-950 px-3 py-2 rounded-lg border border-slate-800 flex items-center gap-2">
+                <span class="text-slate-500">Base URL:</span>
+                <span id="baseUrlDisplay" class="text-blue-400 font-semibold">https://api.local/v1/produtos</span>
+            </div>
+        </div>
+
+        <!-- Abas Principais: 1. Testador de API | 2. Guia Didático HTTP -->
+        <div class="flex border-b border-slate-800">
+            <button id="tabAppBtn" onclick="switchMainTab('app')" class="px-6 py-3 font-semibold text-sm border-b-2 border-blue-500 text-blue-400 flex items-center gap-2 transition">
+                <i class="fa-solid fa-vial-circle-check"></i>
+                <span>Painel Prático & Console Real-time</span>
+            </button>
+            <button id="tabGuideBtn" onclick="switchMainTab('guide')" class="px-6 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
+                <i class="fa-solid fa-book-open"></i>
+                <span>Guia Educativo Métodos HTTP</span>
+            </button>
+        </div>
+
+        <!-- SEÇÃO 1: PAINEL DE TESTES E GERENCIADOR -->
+        <div id="sectionApp" class="space-y-8">
+
+            <!-- Painel de Métodos HTTP Rapid/Interactive Bar -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                <button onclick="quickAction('GET')" class="p-3 bg-slate-900 border border-emerald-500/30 hover:border-emerald-500/70 rounded-xl flex items-center justify-between group transition hover:shadow-lg hover:shadow-emerald-500/10">
+                    <div class="text-left">
+                        <span class="px-2 py-0.5 text-xs font-bold rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">GET</span>
+                        <p class="text-xs font-medium text-slate-300 mt-1">Listar / Buscar</p>
+                    </div>
+                    <i class="fa-solid fa-arrow-down-short-wide text-emerald-400/50 group-hover:text-emerald-400 transition"></i>
+                </button>
+
+                <button onclick="quickAction('POST')" class="p-3 bg-slate-900 border border-blue-500/30 hover:border-blue-500/70 rounded-xl flex items-center justify-between group transition hover:shadow-lg hover:shadow-blue-500/10">
+                    <div class="text-left">
+                        <span class="px-2 py-0.5 text-xs font-bold rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">POST</span>
+                        <p class="text-xs font-medium text-slate-300 mt-1">Criar Novo</p>
+                    </div>
+                    <i class="fa-solid fa-plus-circle text-blue-400/50 group-hover:text-blue-400 transition"></i>
+                </button>
+
+                <button onclick="quickAction('PUT')" class="p-3 bg-slate-900 border border-amber-500/30 hover:border-amber-500/70 rounded-xl flex items-center justify-between group transition hover:shadow-lg hover:shadow-amber-500/10">
+                    <div class="text-left">
+                        <span class="px-2 py-0.5 text-xs font-bold rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">PUT</span>
+                        <p class="text-xs font-medium text-slate-300 mt-1">Substituir Total</p>
+                    </div>
+                    <i class="fa-solid fa-rotate text-amber-400/50 group-hover:text-amber-400 transition"></i>
+                </button>
+
+                <button onclick="quickAction('PATCH')" class="p-3 bg-slate-900 border border-purple-500/30 hover:border-purple-500/70 rounded-xl flex items-center justify-between group transition hover:shadow-lg hover:shadow-purple-500/10">
+                    <div class="text-left">
+                        <span class="px-2 py-0.5 text-xs font-bold rounded bg-purple-500/20 text-purple-400 border border-purple-500/30">PATCH</span>
+                        <p class="text-xs font-medium text-slate-300 mt-1">Atualizar Parcial</p>
+                    </div>
+                    <i class="fa-solid fa-pen-to-square text-purple-400/50 group-hover:text-purple-400 transition"></i>
+                </button>
+
+                <button onclick="quickAction('DELETE')" class="p-3 bg-slate-900 border border-red-500/30 hover:border-red-500/70 rounded-xl flex items-center justify-between group transition hover:shadow-lg hover:shadow-red-500/10 col-span-2 sm:col-span-1">
+                    <div class="text-left">
+                        <span class="px-2 py-0.5 text-xs font-bold rounded bg-red-500/20 text-red-400 border border-red-500/30">DELETE</span>
+                        <p class="text-xs font-medium text-slate-300 mt-1">Remover Item</p>
+                    </div>
+                    <i class="fa-solid fa-trash text-red-400/50 group-hover:text-red-400 transition"></i>
+                </button>
+            </div>
+
+            <!-- Grid com Gerenciador de Produtos e Console de Logs -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <!-- Coluna Esquerda: Formulários e Tabela de Itens (7 colunas) -->
+                <div class="lg:col-span-7 space-y-6">
+
+                    <!-- Form Dinâmico da Requisição HTTP -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+                        <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-2">
+                                <span id="formMethodBadge" class="px-3 py-1 text-xs font-black rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">GET</span>
+                                <h2 id="formTitle" class="font-bold text-slate-100 text-sm">Consultar Produtos</h2>
+                            </div>
+                            <span class="text-xs text-slate-400 font-mono" id="formEndpointHint">/produtos</span>
+                        </div>
+
+                        <!-- Form Conteúdo Dinâmico -->
+                        <form id="httpActionForm" onsubmit="executeRequest(event)" class="space-y-4">
+                            <input type="hidden" id="reqMethod" value="GET">
+
+                            <!-- Campo ID (Visível para GET por ID, PUT, PATCH, DELETE) -->
+                            <div id="fieldIdContainer" class="hidden">
+                                <label class="block text-xs font-medium text-slate-300 mb-1">ID do Produto <span class="text-red-400">*</span></label>
+                                <div class="flex gap-2">
+                                    <input type="number" id="reqId" placeholder="Ex: 1" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition">
+                                    <button type="button" onclick="fillFormFromSelectedId()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 rounded-lg whitespace-nowrap transition">
+                                        Carregar Dados
+                                    </button>
+                                </div>
+                                <p class="text-[11px] text-slate-500 mt-1">Necessário para especificar qual recurso será alterado ou consultado diretamente.</p>
+                            </div>
+
+                            <!-- Campos para POST e PUT (Todos os Dados) -->
+                            <div id="fieldFullDataContainer" class="space-y-3 hidden">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Nome do Produto <span class="text-red-400">*</span></label>
+                                    <input type="text" id="reqName" placeholder="Ex: Teclado Mecânico RGB" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition">
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-300 mb-1">Preço (R$) <span class="text-red-400">*</span></label>
+                                        <input type="number" step="0.01" id="reqPrice" placeholder="299.90" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-300 mb-1">Quantidade Estoque <span class="text-red-400">*</span></label>
+                                        <input type="number" id="reqStock" placeholder="15" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Categoria <span class="text-red-400">*</span></label>
+                                    <select id="reqCategory" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition">
+                                        <option value="Periféricos">Periféricos</option>
+                                        <option value="Monitores">Monitores</option>
+                                        <option value="Hardware">Hardware</option>
+                                        <option value="Acessórios">Acessórios</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Campos Exclusivos para PATCH (Atualização Parcial) -->
+                            <div id="fieldPatchContainer" class="space-y-3 hidden">
+                                <p class="text-xs text-purple-300 bg-purple-950/40 p-2.5 rounded-lg border border-purple-800/40">
+                                    <i class="fa-solid fa-circle-info mr-1"></i> No PATCH você atualiza apenas os campos que preencher abaixo, deixando os demais inalterados.
+                                </p>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-300 mb-1">Novo Preço (Opcional)</label>
+                                        <input type="number" step="0.01" id="patchPrice" placeholder="Manter atual" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-purple-500 transition">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-300 mb-1">Novo Estoque (Opcional)</label>
+                                        <input type="number" id="patchStock" placeholder="Manter atual" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-purple-500 transition">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Botão de Envio -->
+                            <div class="pt-2 flex items-center justify-end gap-3">
+                                <button type="submit" id="btnSubmitForm" class="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm rounded-lg shadow-lg shadow-emerald-600/20 transition flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                    <span>Executar Requisição GET</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Tabela de Produtos / Recursos do Servidor -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="font-bold text-slate-100 flex items-center gap-2">
+                                    <i class="fa-solid fa-boxes-stacked text-blue-400"></i>
+                                    <span>Recursos no Banco de Dados</span>
+                                </h3>
+                                <p class="text-xs text-slate-400">Estado atual dos produtos armazenados no servidor.</p>
+                            </div>
+                            <span id="productCountBadge" class="text-xs font-mono bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full">4 itens</span>
+                        </div>
+
+                        <!-- Lista / Tabela Responsiva -->
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-800 text-slate-400 bg-slate-950/50">
+                                        <th class="p-2.5 font-semibold">ID</th>
+                                        <th class="p-2.5 font-semibold">Produto</th>
+                                        <th class="p-2.5 font-semibold">Categoria</th>
+                                        <th class="p-2.5 font-semibold">Preço</th>
+                                        <th class="p-2.5 font-semibold">Estoque</th>
+                                        <th class="p-2.5 font-semibold text-right">Ações Rápidas</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="productsTableBody" class="divide-y divide-slate-800/60 font-mono">
+                                    <!-- Preenchido via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Coluna Direita: Console / Inspecionador HTTP Real-Time (5 colunas) -->
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col h-full min-h-[500px]">
+                        <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-terminal text-blue-400"></i>
+                                <h2 class="font-bold text-slate-100 text-sm">Inspecionador HTTP Real-Time</h2>
+                            </div>
+                            <button onclick="clearConsole()" class="text-xs text-slate-400 hover:text-red-400 transition flex items-center gap-1">
+                                <i class="fa-solid fa-broom"></i>
+                                <span>Limpar</span>
+                            </button>
+                        </div>
+
+                        <!-- Histórico de Transações HTTP -->
+                        <div id="consoleLogsContainer" class="flex-1 space-y-4 overflow-y-auto max-h-[600px] pr-1 custom-scrollbar">
+                            <!-- Estado Vazio Inicial -->
+                            <div id="emptyConsoleMsg" class="text-center py-12 text-slate-500">
+                                <i class="fa-solid fa-code text-3xl mb-2 opacity-50"></i>
+                                <p class="text-xs">Nenhuma requisição disparada ainda.</p>
+                                <p class="text-[11px] text-slate-600">Escolha uma ação ao lado para visualizar os detalhes de rede.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- SEÇÃO 2: GUIA EDUCATIVO INTERATIVO -->
+        <div id="sectionGuide" class="space-y-6 hidden">
+            
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                <h2 class="text-xl font-bold text-slate-100 mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-graduation-cap text-blue-400"></i>
+                    <span>Compreendendo os Métodos HTTP (Verbos Web)</span>
+                </h2>
+                <p class="text-sm text-slate-300 leading-relaxed">
+                    No protocolo HTTP, os métodos (ou "verbos") definem a intenção da operação que o cliente deseja realizar sobre um determinado recurso na Web (representado por uma URL). Entender a diferença entre cada um é fundamental para construir APIs RESTful elegantes e eficientes.
+                </p>
+            </div>
+
+            <!-- Grid de Cartões dos Métodos -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                <!-- Card GET -->
+                <div class="bg-slate-900 border border-emerald-500/30 rounded-2xl p-5 relative overflow-hidden flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-3 py-1 text-xs font-black rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">GET</span>
+                            <span class="text-[11px] font-mono text-emerald-400/80 bg-emerald-950/60 px-2 py-0.5 rounded">Consulta</span>
+                        </div>
+                        <h3 class="font-bold text-base text-slate-100 mb-2">Obter / Listar Recurso</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed mb-4">
+                            Utilizado para recuperar informações de um servidor sem alterar seu estado. Nunca deve enviar payload no corpo (body).
+                        </p>
+                    </div>
+                    <div class="space-y-2 text-[11px] border-t border-slate-800 pt-3 font-mono">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Seguro (Safe)?</span>
+                            <span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1"></i>Sim (Não altera dados)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Idempotente?</span>
+                            <span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1"></i>Sim</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Possui Request Body?</span>
+                            <span class="text-slate-400 font-bold"><i class="fa-solid fa-xmark mr-1"></i>Não</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Status Tipico:</span>
+                            <span class="text-slate-200">200 OK / 404 Not Found</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card POST -->
+                <div class="bg-slate-900 border border-blue-500/30 rounded-2xl p-5 relative overflow-hidden flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-3 py-1 text-xs font-black rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">POST</span>
+                            <span class="text-[11px] font-mono text-blue-400/80 bg-blue-950/60 px-2 py-0.5 rounded">Criação</span>
+                        </div>
+                        <h3 class="font-bold text-base text-slate-100 mb-2">Criar Novo Recurso</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed mb-4">
+                            Envia dados no corpo da requisição para criar um novo registro no servidor. O servidor atribui um novo ID a este objeto.
+                        </p>
+                    </div>
+                    <div class="space-y-2 text-[11px] border-t border-slate-800 pt-3 font-mono">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Seguro (Safe)?</span>
+                            <span class="text-red-400 font-bold"><i class="fa-solid fa-xmark mr-1"></i>Não (Modifica servidor)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Idempotente?</span>
+                            <span class="text-red-400 font-bold"><i class="fa-solid fa-xmark mr-1"></i>Não (Cria múltiplos itens)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Possui Request Body?</span>
+                            <span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1"></i>Sim (JSON/FormData)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Status Tipico:</span>
+                            <span class="text-slate-200">201 Created</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card PUT -->
+                <div class="bg-slate-900 border border-amber-500/30 rounded-2xl p-5 relative overflow-hidden flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-3 py-1 text-xs font-black rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">PUT</span>
+                            <span class="text-[11px] font-mono text-amber-400/80 bg-amber-950/60 px-2 py-0.5 rounded">Substituição</span>
+                        </div>
+                        <h3 class="font-bold text-base text-slate-100 mb-2">Substituição Completa</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed mb-4">
+                            Substitui **todos os dados** do recurso especificado. Se algum campo for omitido no envio, ele será limpo/reseta do objeto original.
+                        </p>
+                    </div>
+                    <div class="space-y-2 text-[11px] border-t border-slate-800 pt-3 font-mono">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Seguro (Safe)?</span>
+                            <span class="text-red-400 font-bold"><i class="fa-solid fa-xmark mr-1"></i>Não</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Idempotente?</span>
+                            <span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1"></i>Sim (Repetir dá o mesmo resultado)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Possui Request Body?</span>
+                            <span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1"></i>Sim</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Status Tipico:</span>
+                            <span class="text-slate-200">200 OK / 204 No Content</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card PATCH -->
+                <div class="bg-slate-900 border border-purple-500/30 rounded-2xl p-5 relative overflow-hidden flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-3 py-1 text-xs font-black rounded bg-purple-500/20 text-purple-400 border border-purple-500/30">PATCH</span>
+                            <span class="text-[11px] font-mono text-purple-400/80 bg-purple-950/60 px-2 py-0.5 rounded">Modificação Parcial</span>
+                        </div>
+                        <h3 class="font-bold text-base text-slate-100 mb-2">Atualização Parcial</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed mb-4">
+                            Aplica modificações **parciais** a um recurso existente. Você envia apenas as propriedades que deseja alterar (ex: só o preço).
+                        </p>
+                    </div>
+                    <div class="space-y-2 text-[11px] border-t border-slate-800 pt-3 font-mono">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Seguro (Safe)?</span>
+                            <span class="text-red-400 font-bold"><i class="fa-solid fa-xmark mr-1"></i>Não</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Idempotente?</span>
+                            <span class="text-amber-400 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Depende da regra</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Possui Request Body?</span>
+                            <span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1"></i>Sim</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Status Tipico:</span>
+                            <span class="text-slate-200">200 OK / 204 No Content</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card DELETE -->
+                <div class="bg-slate-900 border border-red-500/30 rounded-2xl p-5 relative overflow-hidden flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-3 py-1 text-xs font-black rounded bg-red-500/20 text-red-400 border border-red-500/30">DELETE</span>
+                            <span class="text-[11px] font-mono text-red-400/80 bg-red-950/60 px-2 py-0.5 rounded">Remoção</span>
+                        </div>
+                        <h3 class="font-bold text-base text-slate-100 mb-2">Excluir Recurso</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed mb-4">
+                            Remove o recurso especificado permanentemente do servidor pelo seu identificador (ID).
+                        </p>
+                    </div>
+                    <div class="space-y-2 text-[11px] border-t border-slate-800 pt-3 font-mono">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Seguro (Safe)?</span>
+                            <span class="text-red-400 font-bold"><i class="fa-solid fa-xmark mr-1"></i>Não</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Idempotente?</span>
+                            <span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1"></i>Sim</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Possui Request Body?</span>
+                            <span class="text-slate-400 font-bold"><i class="fa-solid fa-xmark mr-1"></i>Raro/Geralmente Não</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Status Tipico:</span>
+                            <span class="text-slate-200">200 OK / 204 No Content</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Comparativo Idempotência -->
+                <div class="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center gap-2 mb-3 text-amber-400">
+                            <i class="fa-solid fa-scale-balanced text-lg"></i>
+                            <h3 class="font-bold text-sm text-slate-100">O que é Idempotência?</h3>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Um método é considerado <strong>Idempotente</strong> se executar a mesma requisição 1 ou 100 vezes seguidas produz exatamente o mesmo efeito colateral no servidor.
+                        </p>
+                        <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                            • <strong>POST</strong> não é idempotente (cria um novo item a cada clique).<br>
+                            • <strong>PUT</strong> é idempotente (substitui o estado com o exato mesmo valor).
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Modal de Notificação / Toast -->
+    <div id="toastNotification" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 border border-slate-700 text-slate-100 px-4 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-3">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <div>
+            <p id="toastTitle" class="text-xs font-bold">Operação Realizada</p>
+            <p id="toastMsg" class="text-[11px] text-slate-400">Os dados foram processados com sucesso.</p>
+        </div>
+    </div>
+
+    <script>
+        // ESTADO GLOBAL DA APLICAÇÃO
+        let currentApiMode = 'mock'; // 'mock' ou 'real'
+        let currentMethod = 'GET';
+
+        // Banco de Dados Mock Local em Memória
+        let mockProducts = [
+            { id: 1, name: 'Mouse Sem Fio Ergonomico', category: 'Periféricos', price: 149.90, stock: 32 },
+            { id: 2, name: 'Monitor UltraWide 29"', category: 'Monitores', price: 1299.00, stock: 8 },
+            { id: 3, name: 'Teclado Mecânico RGB', category: 'Periféricos', price: 349.50, stock: 14 },
+            { id: 4, name: 'Headset Gaming 7.1 Surround', category: 'Acessórios', price: 279.90, stock: 20 }
+        ];
+
+        // Inicialização
+        window.onload = function() {
+            renderProductsTable();
+            quickAction('GET');
+        };
+
+        // Troca de Abas da Interface Principal
+        function switchMainTab(tab) {
+            const btnApp = document.getElementById('tabAppBtn');
+            const btnGuide = document.getElementById('tabGuideBtn');
+            const secApp = document.getElementById('sectionApp');
+            const secGuide = document.getElementById('sectionGuide');
+
+            if (tab === 'app') {
+                secApp.classList.remove('hidden');
+                secGuide.classList.add('hidden');
+                btnApp.className = "px-6 py-3 font-semibold text-sm border-b-2 border-blue-500 text-blue-400 flex items-center gap-2 transition";
+                btnGuide.className = "px-6 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition";
+            } else {
+                secApp.classList.add('hidden');
+                secGuide.classList.remove('hidden');
+                btnGuide.className = "px-6 py-3 font-semibold text-sm border-b-2 border-blue-500 text-blue-400 flex items-center gap-2 transition";
+                btnApp.className = "px-6 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition";
+            }
+        }
+
+        // Troca entre Simulador Local e API Real
+        function switchApiMode(mode) {
+            currentApiMode = mode;
+            const btnMock = document.getElementById('modeMockBtn');
+            const btnReal = document.getElementById('modeRealBtn');
+            const title = document.getElementById('apiModeTitle');
+            const desc = document.getElementById('apiModeDesc');
+            const urlDisplay = document.getElementById('baseUrlDisplay');
+
+            if (mode === 'mock') {
+                btnMock.className = "px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 bg-blue-600 text-white shadow";
+                btnReal.className = "px-3 py-1.5 text-xs font-semibold rounded-md transition-all text-slate-400 hover:text-slate-200 flex items-center gap-1.5";
+                title.innerText = "Simulador de Estoque Local (In-Memory)";
+                desc.innerText = "As operações afetam o banco de dados local em memória com respostas instantâneas.";
+                urlDisplay.innerText = "https://api.local/v1/produtos";
+            } else {
+                btnReal.className = "px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 bg-blue-600 text-white shadow";
+                btnMock.className = "px-3 py-1.5 text-xs font-semibold rounded-md transition-all text-slate-400 hover:text-slate-200 flex items-center gap-1.5";
+                title.innerText = "API Real Externa (JSONPlaceholder)";
+                desc.innerText = "Requisições HTTP reais enviadas via rede com suporte a REST de testes.";
+                urlDisplay.innerText = "https://jsonplaceholder.typicode.com/posts";
+            }
+
+            quickAction(currentMethod);
+            showToast("Modo de API Alterado", `Agora testando em: ${mode === 'mock' ? 'Simulador Local' : 'API Real Externo'}`);
+        }
+
+        // Alternar Seleção de Método HTTP no Formulário
+        function quickAction(method) {
+            currentMethod = method;
+            document.getElementById('reqMethod').value = method;
+
+            const badge = document.getElementById('formMethodBadge');
+            const title = document.getElementById('formTitle');
+            const hint = document.getElementById('formEndpointHint');
+            const btnSubmit = document.getElementById('btnSubmitForm');
+
+            const fId = document.getElementById('fieldIdContainer');
+            const fFull = document.getElementById('fieldFullDataContainer');
+            const fPatch = document.getElementById('fieldPatchContainer');
+
+            // Reset visibilidade
+            fId.classList.add('hidden');
+            fFull.classList.add('hidden');
+            fPatch.classList.add('hidden');
+
+            const baseEndpoint = currentApiMode === 'mock' ? '/produtos' : '/posts';
+
+            if (method === 'GET') {
+                badge.className = "px-3 py-1 text-xs font-black rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+                badge.innerText = "GET";
+                title.innerText = "Buscar Recurso(s)";
+                hint.innerText = `${baseEndpoint} ou ${baseEndpoint}/:id`;
+                btnSubmit.className = "w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm rounded-lg shadow-lg shadow-emerald-600/20 transition flex items-center justify-center gap-2";
+                btnSubmit.innerHTML = `<i class="fa-solid fa-magnifying-glass"></i><span>Executar Requisição GET</span>`;
+                fId.classList.remove('hidden');
+            } else if (method === 'POST') {
+                badge.className = "px-3 py-1 text-xs font-black rounded bg-blue-500/20 text-blue-400 border border-blue-500/30";
+                badge.innerText = "POST";
+                title.innerText = "Criar Novo Item (Completo)";
+                hint.innerText = baseEndpoint;
+                btnSubmit.className = "w-full sm:w-auto px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm rounded-lg shadow-lg shadow-blue-600/20 transition flex items-center justify-center gap-2";
+                btnSubmit.innerHTML = `<i class="fa-solid fa-plus"></i><span>Executar Requisição POST</span>`;
+                fFull.classList.remove('hidden');
+            } else if (method === 'PUT') {
+                badge.className = "px-3 py-1 text-xs font-black rounded bg-amber-500/20 text-amber-400 border border-amber-500/30";
+                badge.innerText = "PUT";
+                title.innerText = "Substituir Objeto por Inteiro";
+                hint.innerText = `${baseEndpoint}/:id`;
+                btnSubmit.className = "w-full sm:w-auto px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-semibold text-sm rounded-lg shadow-lg shadow-amber-600/20 transition flex items-center justify-center gap-2";
+                btnSubmit.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i><span>Executar Requisição PUT</span>`;
+                fId.classList.remove('hidden');
+                fFull.classList.remove('hidden');
+            } else if (method === 'PATCH') {
+                badge.className = "px-3 py-1 text-xs font-black rounded bg-purple-500/20 text-purple-400 border border-purple-500/30";
+                badge.innerText = "PATCH";
+                title.innerText = "Atualização Parcial de Dados";
+                hint.innerText = `${baseEndpoint}/:id`;
+                btnSubmit.className = "w-full sm:w-auto px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold text-sm rounded-lg shadow-lg shadow-purple-600/20 transition flex items-center justify-center gap-2";
+                btnSubmit.innerHTML = `<i class="fa-solid fa-pen-to-square"></i><span>Executar Requisição PATCH</span>`;
+                fId.classList.remove('hidden');
+                fPatch.classList.remove('hidden');
+            } else if (method === 'DELETE') {
+                badge.className = "px-3 py-1 text-xs font-black rounded bg-red-500/20 text-red-400 border border-red-500/30";
+                badge.innerText = "DELETE";
+                title.innerText = "Deletar Recurso do Servidor";
+                hint.innerText = `${baseEndpoint}/:id`;
+                btnSubmit.className = "w-full sm:w-auto px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white font-semibold text-sm rounded-lg shadow-lg shadow-red-600/20 transition flex items-center justify-center gap-2";
+                btnSubmit.innerHTML = `<i class="fa-solid fa-trash"></i><span>Executar Requisição DELETE</span>`;
+                fId.classList.remove('hidden');
+            }
+        }
+
+        // Execução principal da Requisição HTTP selecionada
+        async function executeRequest(e) {
+            e.preventDefault();
+
+            const method = document.getElementById('reqMethod').value;
+            const idVal = parseInt(document.getElementById('reqId').value);
+
+            let url = currentApiMode === 'mock' ? 'https://api.local/v1/produtos' : 'https://jsonplaceholder.typicode.com/posts';
+            let reqHeaders = { 'Content-Type': 'application/json; charset=UTF-8' };
+            let reqBody = null;
+            let status = 200;
+            let statusText = "OK";
+            let responseData = null;
+
+            // Tratamento MOCK vs REAL
+            if (currentApiMode === 'mock') {
+                if (method === 'GET') {
+                    if (idVal) {
+                        url += `/${idVal}`;
+                        const found = mockProducts.find(p => p.id === idVal);
+                        if (found) {
+                            responseData = found;
+                            status = 200;
+                        } else {
+                            status = 404;
+                            statusText = "Not Found";
+                            responseData = { error: `Produto com ID ${idVal} não foi encontrado no estoque.` };
+                        }
+                    } else {
+                        responseData = mockProducts;
+                        status = 200;
+                    }
+                } else if (method === 'POST') {
+                    const name = document.getElementById('reqName').value || 'Novo Produto Sem Nome';
+                    const price = parseFloat(document.getElementById('reqPrice').value) || 99.90;
+                    const stock = parseInt(document.getElementById('reqStock').value) || 10;
+                    const category = document.getElementById('reqCategory').value || 'Periféricos';
+
+                    const newId = mockProducts.length > 0 ? Math.max(...mockProducts.map(p => p.id)) + 1 : 1;
+                    const newObj = { id: newId, name, category, price, stock };
+                    
+                    mockProducts.push(newObj);
+                    responseData = newObj;
+                    status = 201;
+                    statusText = "Created";
+                    reqBody = { name, category, price, stock };
+                    renderProductsTable();
+                } else if (method === 'PUT') {
+                    if (!idVal) {
+                        showToast("Atenção", "Informe um ID válido para atualizar via PUT.", "warn");
+                        return;
+                    }
+                    url += `/${idVal}`;
+                    const idx = mockProducts.findIndex(p => p.id === idVal);
+                    
+                    const name = document.getElementById('reqName').value || 'Produto Atualizado';
+                    const price = parseFloat(document.getElementById('reqPrice').value) || 100.00;
+                    const stock = parseInt(document.getElementById('reqStock').value) || 1;
+                    const category = document.getElementById('reqCategory').value || 'Periféricos';
+
+                    reqBody = { id: idVal, name, category, price, stock };
+
+                    if (idx !== -1) {
+                        mockProducts[idx] = { id: idVal, name, category, price, stock };
+                        responseData = mockProducts[idx];
+                        status = 200;
+                        renderProductsTable();
+                    } else {
+                        status = 404;
+                        statusText = "Not Found";
+                        responseData = { error: `Item ID ${idVal} inexistente para substituição.` };
+                    }
+                } else if (method === 'PATCH') {
+                    if (!idVal) {
+                        showToast("Atenção", "Informe um ID para aplicação de PATCH.", "warn");
+                        return;
+                    }
+                    url += `/${idVal}`;
+                    const idx = mockProducts.findIndex(p => p.id === idVal);
+                    
+                    const pPrice = document.getElementById('patchPrice').value;
+                    const pStock = document.getElementById('patchStock').value;
+
+                    const patchPayload = {};
+                    if (pPrice !== '') patchPayload.price = parseFloat(pPrice);
+                    if (pStock !== '') patchPayload.stock = parseInt(pStock);
+
+                    reqBody = patchPayload;
+
+                    if (idx !== -1) {
+                        mockProducts[idx] = { ...mockProducts[idx], ...patchPayload };
+                        responseData = mockProducts[idx];
+                        status = 200;
+                        renderProductsTable();
+                    } else {
+                        status = 404;
+                        statusText = "Not Found";
+                        responseData = { error: `Item ID ${idVal} não encontrado.` };
+                    }
+                } else if (method === 'DELETE') {
+                    if (!idVal) {
+                        showToast("Atenção", "Informe um ID para ser removido.", "warn");
+                        return;
+                    }
+                    url += `/${idVal}`;
+                    const idx = mockProducts.findIndex(p => p.id === idVal);
+                    if (idx !== -1) {
+                        mockProducts.splice(idx, 1);
+                        status = 200;
+                        responseData = { message: `Produto ID ${idVal} excluído com sucesso do banco de dados.` };
+                        renderProductsTable();
+                    } else {
+                        status = 404;
+                        statusText = "Not Found";
+                        responseData = { error: `Produto ID ${idVal} não existe.` };
+                    }
+                }
+            } else {
+                // MODO REAL - Usando fetch API na JSONPlaceholder
+                try {
+                    let fetchUrl = url;
+                    let options = { method, headers: reqHeaders };
+
+                    if (method === 'GET' && idVal) {
+                        fetchUrl += `/${idVal}`;
+                    } else if (method === 'POST') {
+                        reqBody = {
+                            title: document.getElementById('reqName').value || 'Item de Teste',
+                            body: 'Criado via HTTP Explorer',
+                            userId: 1
+                        };
+                        options.body = JSON.stringify(reqBody);
+                    } else if (method === 'PUT') {
+                        const targetId = idVal || 1;
+                        fetchUrl += `/${targetId}`;
+                        reqBody = {
+                            id: targetId,
+                            title: document.getElementById('reqName').value || 'Substituído',
+                            body: 'Objeto completo modificado',
+                            userId: 1
+                        };
+                        options.body = JSON.stringify(reqBody);
+                    } else if (method === 'PATCH') {
+                        const targetId = idVal || 1;
+                        fetchUrl += `/${targetId}`;
+                        reqBody = { title: 'Título Atualizado com PATCH' };
+                        options.body = JSON.stringify(reqBody);
+                    } else if (method === 'DELETE') {
+                        const targetId = idVal || 1;
+                        fetchUrl += `/${targetId}`;
+                    }
+
+                    const resp = await fetch(fetchUrl, options);
+                    status = resp.status;
+                    statusText = resp.statusText || (status === 200 ? 'OK' : 'Created');
+                    url = fetchUrl;
+
+                    if (method === 'DELETE' && (status === 200 || status === 204)) {
+                        responseData = { message: `Recurso ${targetId || idVal} removido na API externa.` };
+                    } else {
+                        responseData = await resp.json();
+                    }
+
+                } catch (err) {
+                    status = 500;
+                    statusText = "Internal Error";
+                    responseData = { error: err.message };
+                }
+            }
+
+            // Registrar Log de Inspeção
+            appendConsoleLog(method, url, reqHeaders, reqBody, status, statusText, responseData);
+            showToast(`HTTP ${method} Concluído`, `Status ${status} ${statusText}`);
+        }
+
+        // Preenche o formulário ao clicar em "Carregar Dados"
+        function fillFormFromSelectedId() {
+            const idVal = parseInt(document.getElementById('reqId').value);
+            const found = mockProducts.find(p => p.id === idVal);
+            if (found) {
+                document.getElementById('reqName').value = found.name;
+                document.getElementById('reqPrice').value = found.price;
+                document.getElementById('reqStock').value = found.stock;
+                document.getElementById('reqCategory').value = found.category;
+                showToast("Dados Carregados", `Campos preenchidos para o item ID #${idVal}`);
+            } else {
+                showToast("Não Encontrado", `Nenhum produto com ID #${idVal} no estoque mock.`, "warn");
+            }
+        }
+
+        // Define a ação no item da tabela
+        function setActionFromTable(id, method) {
+            document.getElementById('reqId').value = id;
+            fillFormFromSelectedId();
+            quickAction(method);
+        }
+
+        // Renderizar Tabela de Estoque
+        function renderProductsTable() {
+            const tbody = document.getElementById('productsTableBody');
+            const badge = document.getElementById('productCountBadge');
+            tbody.innerHTML = '';
+
+            badge.innerText = `${mockProducts.length} itens`;
+
+            if (mockProducts.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-500">O banco de dados de produtos está vazio. Use POST para criar novos itens.</td></tr>`;
+                return;
+            }
+
+            mockProducts.forEach(prod => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/40 transition group";
+                tr.innerHTML = `
+                    <td class="p-2.5 font-bold text-blue-400">#${prod.id}</td>
+                    <td class="p-2.5 text-slate-200 font-sans font-medium">${prod.name}</td>
+                    <td class="p-2.5"><span class="bg-slate-800 text-slate-400 px-2 py-0.5 rounded text-[10px]">${prod.category}</span></td>
+                    <td class="p-2.5 text-emerald-400 font-semibold">R$ ${prod.price.toFixed(2)}</td>
+                    <td class="p-2.5 text-slate-300">${prod.stock} un</td>
+                    <td class="p-2.5 text-right space-x-1 font-sans">
+                        <button onclick="setActionFromTable(${prod.id}, 'PUT')" title="Editar Completo (PUT)" class="p-1 px-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded text-[10px] transition">PUT</button>
+                        <button onclick="setActionFromTable(${prod.id}, 'PATCH')" title="Ajuste Parcial (PATCH)" class="p-1 px-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded text-[10px] transition">PATCH</button>
+                        <button onclick="setActionFromTable(${prod.id}, 'DELETE')" title="Excluir (DELETE)" class="p-1 px-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded text-[10px] transition">DEL</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Adicionar Registro de Log ao Console Inspecionador
+        function appendConsoleLog(method, url, headers, body, status, statusText, response) {
+            const container = document.getElementById('consoleLogsContainer');
+            const emptyMsg = document.getElementById('emptyConsoleMsg');
+            if (emptyMsg) emptyMsg.remove();
+
+            const timeStr = new Date().toLocaleTimeString();
+            const logId = 'log_' + Date.now();
+
+            let methodBadgeClass = "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
+            if (method === 'POST') methodBadgeClass = "bg-blue-500/20 text-blue-400 border-blue-500/30";
+            if (method === 'PUT') methodBadgeClass = "bg-amber-500/20 text-amber-400 border-amber-500/30";
+            if (method === 'PATCH') methodBadgeClass = "bg-purple-500/20 text-purple-400 border-purple-500/30";
+            if (method === 'DELETE') methodBadgeClass = "bg-red-500/20 text-red-400 border-red-500/30";
+
+            let statusColor = status < 300 ? 'text-emerald-400 border-emerald-500/30 bg-emerald-950/40' : 'text-red-400 border-red-500/30 bg-red-950/40';
+
+            const curlCmd = generateCurl(method, url, headers, body);
+
+            const card = document.createElement('div');
+            card.className = "bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs font-mono space-y-2 animate-fade-in";
+            card.innerHTML = `
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <div class="flex items-center gap-2 overflow-hidden">
+                        <span class="px-2 py-0.5 font-bold text-[10px] rounded border ${methodBadgeClass}">${method}</span>
+                        <span class="text-slate-300 font-semibold truncate text-[11px]">${url}</span>
+                    </div>
+                    <div class="flex items-center gap-2 whitespace-nowrap">
+                        <span class="px-2 py-0.5 text-[10px] font-bold rounded border ${statusColor}">${status} ${statusText}</span>
+                        <span class="text-[10px] text-slate-500">${timeStr}</span>
+                    </div>
+                </div>
+
+                ${body ? `
+                    <div>
+                        <span class="text-slate-500 text-[10px] block">Payload/Request Body:</span>
+                        <pre class="bg-slate-900/80 p-2 rounded text-blue-300 overflow-x-auto text-[11px] border border-slate-800">${JSON.stringify(body, null, 2)}</pre>
+                    </div>
+                ` : ''}
+
+                <div>
+                    <span class="text-slate-500 text-[10px] block">Resposta do Servidor:</span>
+                    <pre class="bg-slate-900/80 p-2 rounded text-emerald-300 overflow-x-auto text-[11px] border border-slate-800">${JSON.stringify(response, null, 2)}</pre>
+                </div>
+
+                <div class="pt-1 flex justify-end">
+                    <button onclick="copyToClipboard('${escapeQuotes(curlCmd)}')" class="text-[10px] text-slate-400 hover:text-slate-200 bg-slate-900 px-2 py-1 rounded border border-slate-800 transition flex items-center gap-1">
+                        <i class="fa-regular fa-copy"></i>
+                        <span>Copiar cURL</span>
+                    </button>
+                </div>
+            `;
+
+            container.insertBefore(card, container.firstChild);
+        }
+
+        // Gerar comando cURL para exportação
+        function generateCurl(method, url, headers, body) {
+            let cmd = `curl -X ${method} "${url}"`;
+            for (let h in headers) {
+                cmd += ` -H "${h}: ${headers[h]}"`;
+            }
+            if (body) {
+                cmd += ` -d '${JSON.stringify(body)}'`;
+            }
+            return cmd;
+        }
+
+        // Escape para segurança no onclick
+        function escapeQuotes(str) {
+            return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+        }
+
+        // Limpar Console
+        function clearConsole() {
+            const container = document.getElementById('consoleLogsContainer');
+            container.innerHTML = `
+                <div id="emptyConsoleMsg" class="text-center py-12 text-slate-500">
+                    <i class="fa-solid fa-code text-3xl mb-2 opacity-50"></i>
+                    <p class="text-xs">Nenhuma requisição disparada ainda.</p>
+                </div>
+            `;
+            showToast("Console Limpo", "O histórico de requisições foi zerado.");
+        }
+
+        // Copiar para Área de Transferência
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showToast("Copiado!", "Comando cURL copiado para a área de transferência.");
+        }
+
+        // Sistema de Notificações Toast
+        function showToast(title, message, type = "success") {
+            const toast = document.getElementById('toastNotification');
+            const icon = document.getElementById('toastIcon');
+            document.getElementById('toastTitle').innerText = title;
+            document.getElementById('toastMsg').innerText = message;
+
+            if (type === 'warn') {
+                icon.className = "fa-solid fa-triangle-exclamation text-amber-400 text-lg";
+            } else {
+                icon.className = "fa-solid fa-circle-check text-emerald-400 text-lg";
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
