@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explorador e Testador de Métodos HTTP</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        http: {
+                            get: '#10B981',    /* Emerald Green */
+                            post: '#3B82F6',   /* Blue */
+                            put: '#F59E0B',    /* Amber */
+                            patch: '#8B5CF6',  /* Purple */
+                            delete: '#EF4444'  /* Red */
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        code, pre, .font-mono { font-family: 'Fira Code', monospace; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); }
+        .dark ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.2); border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.3); }
+        .dark ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+
+        /* JSON Syntax Highlighting */
+        .json-key { color: #f43f5e; }
+        .json-string { color: #10b981; }
+        .json-number { color: #f59e0b; }
+        .json-boolean { color: #8b5cf6; }
+        .json-null { color: #6b7280; }
+
+        .dark .json-key { color: #fb7185; }
+        .dark .json-string { color: #34d399; }
+        .dark .json-number { color: #fbbf24; }
+        .dark .json-boolean { color: #a78bfa; }
+        .dark .json-null { color: #9ca3af; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
+
+    <!-- Header -->
+    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo & Title -->
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 bg-blue-600 text-white rounded-lg shadow-md">
+                        <i class="fa-solid fa-network-wired text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight">HTTP Methods <span class="text-blue-600 dark:text-blue-400">Lab</span></h1>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Plataforma Interativa de Aprendizado & REST Playground</p>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <nav class="hidden md:flex space-x-1 bg-slate-100 dark:bg-slate-900/60 p-1 rounded-xl border border-slate-200 dark:border-slate-700/50">
+                    <button onclick="switchTab('crud')" id="tab-crud" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg transition-all text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-800 shadow-sm flex items-center gap-2">
+                        <i class="fa-solid fa-list-check"></i> CRUD Didático
+                    </button>
+                    <button onclick="switchTab('playground')" id="tab-playground" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-terminal"></i> REST Playground
+                    </button>
+                    <button onclick="switchTab('guide')" id="tab-guide" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-book-open"></i> Guia Teórico
+                    </button>
+                </nav>
+
+                <!-- Actions / Controls -->
+                <div class="flex items-center space-x-2">
+                    <button id="theme-toggle" onclick="toggleTheme()" class="p-2.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Alternar Tema">
+                        <i class="fa-solid fa-moon dark:hidden text-lg"></i>
+                        <i class="fa-solid fa-sun hidden dark:block text-lg text-amber-400"></i>
+                    </button>
+                    <button onclick="toggleConsole()" class="p-2.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors relative" title="Log de Requisições">
+                        <i class="fa-solid fa-list-ul text-lg"></i>
+                        <span id="log-badge" class="absolute top-1 right-1 bg-blue-600 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">0</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Mobile Navigation -->
+            <div class="flex md:hidden border-t border-slate-200 dark:border-slate-700 py-2 justify-around">
+                <button onclick="switchTab('crud')" id="mob-tab-crud" class="mob-tab-btn px-3 py-1.5 text-xs font-medium rounded-lg text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-slate-800 flex items-center gap-1.5">
+                    <i class="fa-solid fa-list-check"></i> CRUD
+                </button>
+                <button onclick="switchTab('playground')" id="mob-tab-playground" class="mob-tab-btn px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                    <i class="fa-solid fa-terminal"></i> Playground
+                </button>
+                <button onclick="switchTab('guide')" id="mob-tab-guide" class="mob-tab-btn px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                    <i class="fa-solid fa-book-open"></i> Guia
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
+
+        <!-- SECTION 1: CRUD DIDÁTICO INTEGRADO -->
+        <section id="section-crud" class="space-y-6">
+            <!-- Educational Header Banner -->
+            <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+                <div class="absolute -right-10 -bottom-10 opacity-10 text-9xl font-mono">HTTP</div>
+                <div class="relative z-10 max-w-3xl">
+                    <span class="bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">Modo Prático</span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold mt-2 mb-2">Gerenciador de Tarefas Educativo</h2>
+                    <p class="text-blue-100 text-sm sm:text-base">
+                        Veja na prática como cada ação do usuário dispara um método HTTP específico. Interaja com o gerenciador e observe o payload, resposta e método sendo executados em tempo real!
+                    </p>
+                </div>
+            </div>
+
+            <!-- HTTP Method Action Indicators Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <div class="bg-white dark:bg-slate-800 p-3.5 rounded-xl border-2 border-emerald-500/30 shadow-sm flex items-center gap-3">
+                    <span class="bg-emerald-500 text-white text-xs font-extrabold px-2.5 py-1 rounded-md">GET</span>
+                    <div>
+                        <p class="text-xs font-bold text-slate-700 dark:text-slate-200">Listar / Buscar</p>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Leitura segura</p>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-slate-800 p-3.5 rounded-xl border-2 border-blue-500/30 shadow-sm flex items-center gap-3">
+                    <span class="bg-blue-500 text-white text-xs font-extrabold px-2.5 py-1 rounded-md">POST</span>
+                    <div>
+                        <p class="text-xs font-bold text-slate-700 dark:text-slate-200">Criar Item</p>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Novo recurso</p>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-slate-800 p-3.5 rounded-xl border-2 border-amber-500/30 shadow-sm flex items-center gap-3">
+                    <span class="bg-amber-500 text-white text-xs font-extrabold px-2.5 py-1 rounded-md">PUT</span>
+                    <div>
+                        <p class="text-xs font-bold text-slate-700 dark:text-slate-200">Substituir</p>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Atualização total</p>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-slate-800 p-3.5 rounded-xl border-2 border-purple-500/30 shadow-sm flex items-center gap-3">
+                    <span class="bg-purple-500 text-white text-xs font-extrabold px-2.5 py-1 rounded-md">PATCH</span>
+                    <div>
+                        <p class="text-xs font-bold text-slate-700 dark:text-slate-200">Modificar</p>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Atualização parcial</p>
+                    </div>
+                </div>
+                <div class="col-span-2 md:col-span-1 bg-white dark:bg-slate-800 p-3.5 rounded-xl border-2 border-rose-500/30 shadow-sm flex items-center gap-3">
+                    <span class="bg-rose-500 text-white text-xs font-extrabold px-2.5 py-1 rounded-md">DELETE</span>
+                    <div>
+                        <p class="text-xs font-bold text-slate-700 dark:text-slate-200">Remover</p>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Excluir recurso</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Task List / Actions Panel (2 cols) -->
+                <div class="lg:col-span-2 space-y-4">
+                    <!-- Actions Bar -->
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex items-center space-x-2">
+                            <button onclick="crudFetchTasks()" class="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold transition flex items-center gap-2 shadow-sm">
+                                <i class="fa-solid fa-rotate-right"></i>
+                                GET (Recarregar Dados)
+                            </button>
+                            <button onclick="openCreateTaskModal()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-2 shadow-sm">
+                                <i class="fa-solid fa-plus"></i>
+                                POST (Nova Tarefa)
+                            </button>
+                        </div>
+                        <span class="text-xs text-slate-500 dark:text-slate-400 font-mono" id="crud-count">Carregando itens...</span>
+                    </div>
+
+                    <!-- Tasks Container -->
+                    <div id="crud-tasks-container" class="space-y-3 min-h-[300px]">
+                        <!-- Dynamic Tasks inserted via JS -->
+                    </div>
+                </div>
+
+                <!-- Live HTTP Action Explainer Card (1 col) -->
+                <div class="space-y-4">
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm sticky top-24">
+                        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3 mb-4">
+                            <h3 class="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 text-sm">
+                                <i class="fa-solid fa-microchip text-blue-500"></i> Inspetor de Ação Recente
+                            </h3>
+                            <span id="inspector-badge" class="px-2 py-0.5 text-[10px] font-extrabold rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                                AGUARDANDO
+                            </span>
+                        </div>
+
+                        <div id="inspector-content" class="space-y-3 text-xs">
+                            <p class="text-slate-500 dark:text-slate-400 italic text-center py-8">
+                                Clique em qualquer botão da lista de tarefas para ver a mágica do HTTP acontecer em tempo real.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: REST API PLAYGROUND -->
+        <section id="section-playground" class="hidden space-y-6">
+            <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-blue-500"></i> REST API Playground
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                            Monte requisições HTTP reais para testar APIs públicas (como JSONPlaceholder) ou seu próprio backend.
+                        </p>
+                    </div>
+
+                    <!-- Preset URLs Selector -->
+                    <div class="flex items-center gap-2">
+                        <label for="preset-selector" class="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">Presets de Teste:</label>
+                        <select id="preset-selector" onchange="loadPreset()" class="bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">-- Selecionar Exemplo --</option>
+                            <option value="get-users">GET /users (Listar Usuários)</option>
+                            <option value="get-user-1">GET /users/1 (Buscar Usuário 1)</option>
+                            <option value="post-post">POST /posts (Criar Postagem)</option>
+                            <option value="put-post">PUT /posts/1 (Substituir Postagem 1)</option>
+                            <option value="patch-post">PATCH /posts/1 (Alterar Título 1)</option>
+                            <option value="delete-post">DELETE /posts/1 (Excluir Postagem 1)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Request Bar -->
+                <div class="flex flex-col sm:flex-row gap-2 mb-6">
+                    <!-- Method Selector -->
+                    <select id="pg-method" onchange="updateMethodStyle()" class="bg-slate-100 dark:bg-slate-900 border-2 border-emerald-500 font-extrabold text-xs px-3 py-2.5 rounded-lg text-emerald-600 dark:text-emerald-400 focus:outline-none transition-colors">
+                        <option value="GET" class="text-emerald-600 font-bold">GET</option>
+                        <option value="POST" class="text-blue-600 font-bold">POST</option>
+                        <option value="PUT" class="text-amber-600 font-bold">PUT</option>
+                        <option value="PATCH" class="text-purple-600 font-bold">PATCH</option>
+                        <option value="DELETE" class="text-rose-600 font-bold">DELETE</option>
+                    </select>
+
+                    <!-- URL Input -->
+                    <div class="flex-grow flex items-center bg-slate-100 dark:bg-slate-900 rounded-lg border border-slate-300 dark:border-slate-700 px-3 focus-within:ring-2 focus-within:ring-blue-500">
+                        <span class="text-xs text-slate-400 font-mono mr-2">URL:</span>
+                        <input type="text" id="pg-url" value="https://jsonplaceholder.typicode.com/posts/1" class="w-full bg-transparent text-xs font-mono py-2.5 text-slate-800 dark:text-slate-200 focus:outline-none" placeholder="https://api.exemplo.com/v1/recurso">
+                    </div>
+
+                    <!-- Send Button -->
+                    <button onclick="executePlaygroundRequest()" id="pg-send-btn" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-md transition flex items-center justify-center gap-2 min-w-[120px]">
+                        <i class="fa-solid fa-paper-plane"></i> Enviar
+                    </button>
+                </div>
+
+                <!-- Request Configuration Tabs (Headers / Body) -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Left: Request Configuration -->
+                    <div class="space-y-4">
+                        <div class="flex border-b border-slate-200 dark:border-slate-700">
+                            <button onclick="switchPgReqTab('body')" id="pg-req-tab-body" class="px-4 py-2 text-xs font-bold text-blue-600 border-b-2 border-blue-600 transition">Corpo da Requisição (JSON)</button>
+                            <button onclick="switchPgReqTab('headers')" id="pg-req-tab-headers" class="px-4 py-2 text-xs font-medium text-slate-500 dark:text-slate-400 transition">Headers Customizados</button>
+                        </div>
+
+                        <!-- JSON Body Editor -->
+                        <div id="pg-req-panel-body" class="space-y-2">
+                            <div class="flex justify-between items-center">
+                                <label class="text-[11px] text-slate-500 font-mono">Payload JSON:</label>
+                                <button onclick="formatPlaygroundJson()" class="text-[11px] text-blue-500 hover:underline"><i class="fa-solid fa-wand-magic-sparkles"></i> Formatar JSON</button>
+                            </div>
+                            <textarea id="pg-body" rows="9" class="w-full bg-slate-900 text-slate-100 font-mono text-xs p-3 rounded-lg border border-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none" placeholder="{\n  &quot;title&quot;: &quot;Novo Título&quot;,\n  &quot;body&quot;: &quot;Conteúdo...&quot;\n}">{
+  "title": "Aprendendo Métodos HTTP",
+  "body": "GET busca, POST cria, PUT substitui, PATCH altera e DELETE remove!",
+  "userId": 1
+}</textarea>
+                        </div>
+
+                        <!-- Headers Editor -->
+                        <div id="pg-req-panel-headers" class="hidden space-y-2">
+                            <label class="text-[11px] text-slate-500 font-mono">Cabeçalhos (Chave: Valor):</label>
+                            <textarea id="pg-headers" rows="9" class="w-full bg-slate-900 text-slate-100 font-mono text-xs p-3 rounded-lg border border-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none" placeholder="Content-Type: application/json&#10;Authorization: Bearer token123">Content-Type: application/json</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Right: Response Inspection -->
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Resposta do Servidor</span>
+                            <div class="flex items-center space-x-3 text-xs font-mono">
+                                <span id="pg-res-status" class="px-2 py-0.5 rounded text-[11px] bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 font-bold">--- Status</span>
+                                <span id="pg-res-time" class="text-slate-400">0 ms</span>
+                            </div>
+                        </div>
+
+                        <!-- Response Body / Inspector Container -->
+                        <div class="relative bg-slate-900 rounded-lg border border-slate-700 overflow-hidden min-h-[240px] flex flex-col">
+                            <div id="pg-res-header-info" class="px-3 py-1.5 bg-slate-800 border-b border-slate-700 text-[11px] text-slate-400 font-mono flex justify-between items-center">
+                                <span>Response Body</span>
+                                <button onclick="copyResponseToClipboard()" class="hover:text-white transition" title="Copiar Resposta"><i class="fa-regular fa-copy"></i> Copiar</button>
+                            </div>
+                            <pre id="pg-res-body" class="p-4 text-xs font-mono overflow-auto max-h-[220px] text-slate-300 flex-grow">
+<span class="text-slate-500 italic">// Clique em "Enviar" para realizar a requisição HTTP...</span>
+                            </pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: GUIA TEÓRICO INTERATIVO -->
+        <section id="section-guide" class="hidden space-y-6">
+            <!-- Header -->
+            <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">
+                    Guia Definitivo dos Métodos HTTP & Arquitetura REST
+                </h2>
+                <p class="text-slate-600 dark:text-slate-400 text-sm max-w-3xl">
+                    Entenda como funcionam os principais métodos de requisição da Web, suas características de Idempotência e Segurança, e como escolher o método certo para cada situação.
+                </p>
+            </div>
+
+            <!-- Methods Detailed Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- GET -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl border-l-4 border-emerald-500 border-y border-r border-slate-200 dark:border-slate-700 p-5 shadow-sm space-y-3">
+                    <div class="flex justify-between items-start">
+                        <span class="bg-emerald-500 text-white font-black text-xs px-2.5 py-1 rounded">GET</span>
+                        <div class="flex gap-2">
+                            <span class="bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded">Seguro</span>
+                            <span class="bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 text-[10px] font-bold px-2 py-0.5 rounded">Idempotente</span>
+                        </div>
+                    </div>
+                    <h3 class="font-bold text-slate-800 dark:text-slate-100">Leitura de Dados</h3>
+                    <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                        O método <strong>GET</strong> é utilizado exclusivamente para solicitar/recuperar dados do servidor. Ele <strong>não deve alterar</strong> o estado dos recursos no backend.
+                    </p>
+                    <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-lg text-xs font-mono space-y-1">
+                        <p class="text-slate-500">// Exemplo de endpoint:</p>
+                        <p class="text-emerald-600 dark:text-emerald-400">GET /api/v1/usuarios?status=ativo</p>
+                    </div>
+                </div>
+
+                <!-- POST -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl border-l-4 border-blue-500 border-y border-r border-slate-200 dark:border-slate-700 p-5 shadow-sm space-y-3">
+                    <div class="flex justify-between items-start">
+                        <span class="bg-blue-500 text-white font-black text-xs px-2.5 py-1 rounded">POST</span>
+                        <div class="flex gap-2">
+                            <span class="bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 text-[10px] font-bold px-2 py-0.5 rounded">Não Seguro</span>
+                            <span class="bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 text-[10px] font-bold px-2 py-0.5 rounded">Não Idempotente</span>
+                        </div>
+                    </div>
+                    <h3 class="font-bold text-slate-800 dark:text-slate-100">Criação de Recursos</h3>
+                    <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                        O método <strong>POST</strong> envia dados ao servidor para criar um novo recurso subordinado. Cada execução idêntica gera um novo registro com ID diferente.
+                    </p>
+                    <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-lg text-xs font-mono space-y-1">
+                        <p class="text-slate-500">// Resposta típica (201 Created):</p>
+                        <p class="text-blue-600 dark:text-blue-400">POST /api/v1/usuarios { "nome": "Maria" }</p>
+                    </div>
+                </div>
+
+                <!-- PUT vs PATCH Comparison -->
+                <div class="md:col-span-2 bg-gradient-to-br from-amber-500/5 via-purple-500/5 to-transparent bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3">
+                        <h3 class="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                            <i class="fa-solid fa-code-compare text-amber-500"></i> Qual a diferença real entre PUT e PATCH?
+                        </h3>
+                        <span class="text-xs text-slate-400 font-mono">Comparativo Prático</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- PUT Box -->
+                        <div class="p-4 bg-amber-50/50 dark:bg-amber-950/20 rounded-xl border border-amber-200 dark:border-amber-800/40 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="bg-amber-500 text-white font-extrabold text-xs px-2 py-0.5 rounded">PUT</span>
+                                <span class="text-[10px] font-bold text-amber-700 dark:text-amber-300">Substituição Completa</span>
+                            </div>
+                            <p class="text-xs text-slate-600 dark:text-slate-300">
+                                Substitui o recurso inteiro. Se você enviar apenas 1 campo, os outros campos omitidos serão limpos ou redefinidos para os valores padrão!
+                            </p>
+                            <pre class="bg-slate-900 text-amber-400 p-2.5 rounded text-[11px] font-mono">// Envia o objeto INTEIRO
+PUT /usuarios/10
+{ "nome": "João", "email": "j@test.com", "idade": 30 }</pre>
+                        </div>
+
+                        <!-- PATCH Box -->
+                        <div class="p-4 bg-purple-50/50 dark:bg-purple-950/20 rounded-xl border border-purple-200 dark:border-purple-800/40 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="bg-purple-500 text-white font-extrabold text-xs px-2 py-0.5 rounded">PATCH</span>
+                                <span class="text-[10px] font-bold text-purple-700 dark:text-purple-300">Modificação Parcial</span>
+                            </div>
+                            <p class="text-xs text-slate-600 dark:text-slate-300">
+                                Aplica alterações parciais. Modifica apenas os atributos explicitamente declarados no payload, mantendo todos os outros inalterados.
+                            </p>
+                            <pre class="bg-slate-900 text-purple-400 p-2.5 rounded text-[11px] font-mono">// Envia APENAS o campo que mudou
+PATCH /usuarios/10
+{ "email": "novo@email.com" }</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DELETE -->
+                <div class="md:col-span-2 bg-white dark:bg-slate-800 rounded-xl border-l-4 border-rose-500 border-y border-r border-slate-200 dark:border-slate-700 p-5 shadow-sm space-y-3">
+                    <div class="flex justify-between items-start">
+                        <span class="bg-rose-500 text-white font-black text-xs px-2.5 py-1 rounded">DELETE</span>
+                        <div class="flex gap-2">
+                            <span class="bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 text-[10px] font-bold px-2 py-0.5 rounded">Não Seguro</span>
+                            <span class="bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 text-[10px] font-bold px-2 py-0.5 rounded">Idempotente</span>
+                        </div>
+                    </div>
+                    <h3 class="font-bold text-slate-800 dark:text-slate-100">Remoção de Recursos</h3>
+                    <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                        Remove o recurso especificado do servidor. Retorna frequentemente status <strong>204 No Content</strong> (sem corpo na resposta) ou 200 OK.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Status Codes Cheat Sheet -->
+            <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                <h3 class="font-bold text-slate-800 dark:text-slate-100 text-lg flex items-center gap-2">
+                    <i class="fa-solid fa-list-numeric text-blue-500"></i> Principais Códigos de Status (Status Codes)
+                </h3>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                    <div class="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-lg">
+                        <span class="font-bold text-emerald-700 dark:text-emerald-400 font-mono text-sm block mb-1">200 OK</span>
+                        <p class="text-slate-600 dark:text-slate-400">Requisição bem-sucedida (GET, PUT, PATCH).</p>
+                    </div>
+                    <div class="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-lg">
+                        <span class="font-bold text-emerald-700 dark:text-emerald-400 font-mono text-sm block mb-1">201 Created</span>
+                        <p class="text-slate-600 dark:text-slate-400">Recurso criado com sucesso (POST).</p>
+                    </div>
+                    <div class="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-lg">
+                        <span class="font-bold text-emerald-700 dark:text-emerald-400 font-mono text-sm block mb-1">204 No Content</span>
+                        <p class="text-slate-600 dark:text-slate-400">Sucesso sem conteúdo no corpo (DELETE).</p>
+                    </div>
+                    <div class="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg">
+                        <span class="font-bold text-amber-700 dark:text-amber-400 font-mono text-sm block mb-1">400 Bad Request</span>
+                        <p class="text-slate-600 dark:text-slate-400">Sintaxe JSON incorreta ou campos inválidos.</p>
+                    </div>
+                    <div class="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg">
+                        <span class="font-bold text-amber-700 dark:text-amber-400 font-mono text-sm block mb-1">401 Unauthorized</span>
+                        <p class="text-slate-600 dark:text-slate-400">Requer autenticação válida (Token/Key).</p>
+                    </div>
+                    <div class="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/50 rounded-lg">
+                        <span class="font-bold text-rose-700 dark:text-rose-400 font-mono text-sm block mb-1">404 Not Found</span>
+                        <p class="text-slate-600 dark:text-slate-400">O recurso solicitado não existe no servidor.</p>
+                    </div>
+                    <div class="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/50 rounded-lg">
+                        <span class="font-bold text-rose-700 dark:text-rose-400 font-mono text-sm block mb-1">405 Method Not Allowed</span>
+                        <p class="text-slate-600 dark:text-slate-400">O endpoint não suporta este método HTTP.</p>
+                    </div>
+                    <div class="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/50 rounded-lg">
+                        <span class="font-bold text-rose-700 dark:text-rose-400 font-mono text-sm block mb-1">500 Internal Error</span>
+                        <p class="text-slate-600 dark:text-slate-400">Falha inesperada ou erro interno do servidor.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Drawer / Modal: Console de Logs em Tempo Real -->
+    <div id="console-drawer" class="fixed inset-y-0 right-0 w-full sm:w-[480px] bg-slate-900 text-slate-100 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col border-l border-slate-800">
+        <!-- Drawer Header -->
+        <div class="p-4 bg-slate-800 border-b border-slate-700 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-terminal text-blue-400"></i>
+                <h3 class="font-bold text-sm">Console de Logs HTTP</h3>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="clearConsoleLogs()" class="px-2 py-1 text-[11px] bg-slate-700 hover:bg-slate-600 rounded text-slate-300 transition">
+                    <i class="fa-solid fa-trash-can"></i> Limpar
+                </button>
+                <button onclick="toggleConsole()" class="p-1.5 text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Drawer Logs List -->
+        <div id="console-logs-list" class="flex-grow p-4 overflow-y-auto space-y-3 font-mono text-xs">
+            <p id="console-empty-msg" class="text-slate-500 italic text-center py-10">Nenhuma requisição disparada até o momento.</p>
+        </div>
+    </div>
+
+    <!-- Modals for CRUD operations -->
+    <!-- CREATE TASK MODAL (POST) -->
+    <div id="modal-create" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3">
+                <div class="flex items-center space-x-2">
+                    <span class="bg-blue-500 text-white font-extrabold text-xs px-2 py-0.5 rounded">POST</span>
+                    <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Criar Nova Tarefa</h3>
+                </div>
+                <button onclick="closeModal('modal-create')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form onsubmit="handleCreateTask(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Título da Tarefa *</label>
+                    <input type="text" id="create-title" required class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: Estudar especificação do HTTP/2">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Prioridade</label>
+                    <select id="create-priority" class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="Alta">Alta</option>
+                        <option value="Média" selected>Média</option>
+                        <option value="Baixa">Baixa</option>
+                    </select>
+                </div>
+
+                <div class="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-900/50 text-[11px] text-blue-700 dark:text-blue-300 font-mono">
+                    <strong>HTTP Behavior:</strong> Envia payload completo via <code>POST /posts</code>. O servidor criará o recurso e retornará status <code>201 Created</code> com um ID gerado.
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-create')" class="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition">Disparar POST</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- UPDATE FULL TASK MODAL (PUT) -->
+    <div id="modal-put" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3">
+                <div class="flex items-center space-x-2">
+                    <span class="bg-amber-500 text-white font-extrabold text-xs px-2 py-0.5 rounded">PUT</span>
+                    <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Substituir Objeto Inteiro (PUT)</h3>
+                </div>
+                <button onclick="closeModal('modal-put')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form onsubmit="handlePutTask(event)" class="space-y-3">
+                <input type="hidden" id="put-id">
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Título *</label>
+                    <input type="text" id="put-title" required class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Prioridade *</label>
+                    <select id="put-priority" class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        <option value="Alta">Alta</option>
+                        <option value="Média">Média</option>
+                        <option value="Baixa">Baixa</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="flex items-center space-x-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
+                        <input type="checkbox" id="put-completed" class="rounded text-amber-500 focus:ring-amber-500">
+                        <span>Concluída</span>
+                    </label>
+                </div>
+
+                <div class="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-900/50 text-[11px] text-amber-800 dark:text-amber-300 font-mono">
+                    <strong>Atenção PUT:</strong> Todos os campos acima serão enviados no payload. O recurso será totalmente substituído pelo novo objeto.
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-put')" class="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition">Disparar PUT</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Javascript Application Logic -->
+    <script>
+        /* State Management */
+        let state = {
+            tasks: [
+                { id: 1, title: 'Compreender a diferença entre idempotência no PUT e POST', completed: false, priority: 'Alta' },
+                { id: 2, title: 'Testar envio de Headers no Playground REST', completed: true, priority: 'Média' },
+                { id: 3, title: 'Validar retorno 204 No Content no método DELETE', completed: false, priority: 'Baixa' }
+            ],
+            logs: [],
+            activeTab: 'crud',
+            isConsoleOpen: false
+        };
+
+        const BASE_API_URL = 'https://jsonplaceholder.typicode.com/posts';
+
+        /* Initialization */
+        window.onload = function() {
+            renderTasks();
+            updateConsoleBadge();
+        };
+
+        /* Theme Toggle */
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        /* Tab Switcher */
+        function switchTab(tabId) {
+            state.activeTab = tabId;
+
+            // Hide all sections
+            document.getElementById('section-crud').classList.add('hidden');
+            document.getElementById('section-playground').classList.add('hidden');
+            document.getElementById('section-guide').classList.add('hidden');
+
+            // Reset tab button styles
+            const tabs = ['crud', 'playground', 'guide'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                const mobBtn = document.getElementById(`mob-tab-${t}`);
+                if (btn) {
+                    btn.className = "tab-btn px-4 py-2 text-sm font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all flex items-center gap-2";
+                }
+                if (mobBtn) {
+                    mobBtn.className = "mob-tab-btn px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 dark:text-slate-400 flex items-center gap-1.5";
+                }
+            });
+
+            // Show selected section
+            document.getElementById(`section-${tabId}`).classList.remove('hidden');
+
+            // Highlight active tab button
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            const activeMobBtn = document.getElementById(`mob-tab-${tabId}`);
+            if (activeBtn) {
+                activeBtn.className = "tab-btn px-4 py-2 text-sm font-medium rounded-lg transition-all text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-800 shadow-sm flex items-center gap-2";
+            }
+            if (activeMobBtn) {
+                activeMobBtn.className = "mob-tab-btn px-3 py-1.5 text-xs font-medium rounded-lg text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-slate-800 flex items-center gap-1.5";
+            }
+        }
+
+        /* --- STREAMING_CHUNK:Building CRUD and Educational Inspector Handlers... --- */
+        /* CRUD Operations & Inspector */
+
+        function renderTasks() {
+            const container = document.getElementById('crud-tasks-container');
+            const countLabel = document.getElementById('crud-count');
+            countLabel.textContent = `${state.tasks.length} item(ns) na memória`;
+
+            if (state.tasks.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white dark:bg-slate-800 p-8 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-center">
+                        <i class="fa-solid fa-folder-open text-3xl text-slate-400 mb-2"></i>
+                        <p class="text-sm font-medium text-slate-600 dark:text-slate-400">Nenhuma tarefa cadastrada.</p>
+                        <p class="text-xs text-slate-400 mt-1">Clique em GET para recarregar do servidor ou POST para criar uma nova.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = state.tasks.map(task => `
+                <div id="task-card-${task.id}" class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="flex items-start space-x-3">
+                        <!-- PATCH Action: Quick Toggle Status -->
+                        <button onclick="handlePatchToggleStatus(${task.id})" class="mt-1 text-lg transition" title="PATCH: Alternar apenas o campo 'completed'">
+                            <i class="${task.completed ? 'fa-solid fa-circle-check text-emerald-500' : 'fa-regular fa-circle text-slate-400 hover:text-blue-500'}"></i>
+                        </button>
+                        <div>
+                            <h4 class="font-medium text-xs sm:text-sm text-slate-800 dark:text-slate-200 ${task.completed ? 'line-through text-slate-400 dark:text-slate-500' : ''}">
+                                ${escapeHtml(task.title)}
+                            </h4>
+                            <div class="flex items-center space-x-2 mt-1">
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded ${getPriorityBadgeClass(task.priority)}">
+                                    ${task.priority}
+                                </span>
+                                <span class="text-[10px] text-slate-400 font-mono">ID: ${task.id}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons mapped to HTTP Methods -->
+                    <div class="flex items-center space-x-1 sm:space-x-2 self-end sm:self-center border-t sm:border-t-0 border-slate-100 dark:border-slate-700/50 pt-2 sm:pt-0">
+                        <!-- PATCH Button (Inline Edit Title) -->
+                        <button onclick="handleInlinePatchTitle(${task.id})" class="px-2.5 py-1.5 bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/60 text-purple-600 dark:text-purple-300 rounded-lg text-xs font-semibold transition flex items-center gap-1" title="PATCH: Modificar apenas o título">
+                            <span class="bg-purple-500 text-white text-[9px] px-1 rounded">PATCH</span>
+                            <span>Título</span>
+                        </button>
+
+                        <!-- PUT Button (Full Edit Modal) -->
+                        <button onclick="openPutModal(${task.id})" class="px-2.5 py-1.5 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-600 dark:text-amber-300 rounded-lg text-xs font-semibold transition flex items-center gap-1" title="PUT: Substituir todo o objeto da tarefa">
+                            <span class="bg-amber-500 text-white text-[9px] px-1 rounded">PUT</span>
+                            <span>Substituir</span>
+                        </button>
+
+                        <!-- DELETE Button -->
+                        <button onclick="handleDeleteTask(${task.id})" class="px-2 py-1.5 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 rounded-lg text-xs font-semibold transition" title="DELETE: Remover tarefa">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getPriorityBadgeClass(priority) {
+            switch (priority) {
+                case 'Alta': return 'bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400';
+                case 'Média': return 'bg-amber-100 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400';
+                default: return 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300';
+            }
+        }
+
+        // GET: Fetch list
+        async function crudFetchTasks() {
+            const startTime = performance.now();
+            updateInspector('GET', `${BASE_API_URL}?_limit=3`, null, 'Executando requisição GET...');
+
+            try {
+                const res = await fetch(`${BASE_API_URL}?_limit=3`);
+                const data = await res.json();
+                const duration = Math.round(performance.now() - startTime);
+
+                // Map JSONPlaceholder posts to task items
+                state.tasks = data.map((item, idx) => ({
+                    id: item.id,
+                    title: item.title,
+                    completed: idx % 2 === 0,
+                    priority: idx === 0 ? 'Alta' : 'Média'
+                }));
+
+                renderTasks();
+
+                const responseData = { status: res.status, statusText: res.statusText, itemsRetrieved: data.length, sample: data[0] };
+                updateInspector('GET', `${BASE_API_URL}?_limit=3`, null, responseData, duration, 200);
+                addLog('GET', `${BASE_API_URL}?_limit=3`, null, responseData, 200, duration);
+            } catch (err) {
+                showToast('Erro na requisição GET', 'error');
+            }
+        }
+
+        // POST: Create Task
+        function openCreateTaskModal() {
+            document.getElementById('create-title').value = '';
+            document.getElementById('modal-create').classList.remove('hidden');
+        }
+
+        async function handleCreateTask(e) {
+            e.preventDefault();
+            closeModal('modal-create');
+
+            const title = document.getElementById('create-title').value;
+            const priority = document.getElementById('create-priority').value;
+
+            const payload = { title, priority, completed: false, userId: 1 };
+            const startTime = performance.now();
+
+            try {
+                const res = await fetch(BASE_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                const duration = Math.round(performance.now() - startTime);
+
+                // Add to local state (simulate backend ID generation if needed)
+                const newTask = {
+                    id: data.id > 100 ? state.tasks.length + 1 : data.id,
+                    title: payload.title,
+                    priority: payload.priority,
+                    completed: false
+                };
+
+                state.tasks.unshift(newTask);
+                renderTasks();
+
+                updateInspector('POST', BASE_API_URL, payload, data, duration, 201);
+                addLog('POST', BASE_API_URL, payload, data, 201, duration);
+                showToast('Nova tarefa criada via POST (201 Created)!');
+            } catch (err) {
+                showToast('Erro ao disparar POST', 'error');
+            }
+        }
+
+        // PUT: Replace Full Task Object
+        function openPutModal(id) {
+            const task = state.tasks.find(t => t.id === id);
+            if (!task) return;
+
+            document.getElementById('put-id').value = task.id;
+            document.getElementById('put-title').value = task.title;
+            document.getElementById('put-priority').value = task.priority;
+            document.getElementById('put-completed').checked = task.completed;
+
+            document.getElementById('modal-put').classList.remove('hidden');
+        }
+
+        async function handlePutTask(e) {
+            e.preventDefault();
+            closeModal('modal-put');
+
+            const id = parseInt(document.getElementById('put-id').value);
+            const title = document.getElementById('put-title').value;
+            const priority = document.getElementById('put-priority').value;
+            const completed = document.getElementById('put-completed').checked;
+
+            const url = `${BASE_API_URL}/${id}`;
+            const payload = { id, title, priority, completed, userId: 1 };
+            const startTime = performance.now();
+
+            try {
+                const res = await fetch(url, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                const duration = Math.round(performance.now() - startTime);
+
+                // Update local state
+                const idx = state.tasks.findIndex(t => t.id === id);
+                if (idx !== -1) {
+                    state.tasks[idx] = { id, title, priority, completed };
+                }
+                renderTasks();
+
+                updateInspector('PUT', url, payload, data, duration, 200);
+                addLog('PUT', url, payload, data, 200, duration);
+                showToast(`Objeto #${id} totalmente substituído via PUT!`);
+            } catch (err) {
+                showToast('Erro ao disparar PUT', 'error');
+            }
+        }
+
+        // PATCH: Partial Update 1 (Toggle Completed)
+        async function handlePatchToggleStatus(id) {
+            const task = state.tasks.find(t => t.id === id);
+            if (!task) return;
+
+            const newStatus = !task.completed;
+            const url = `${BASE_API_URL}/${id}`;
+            const payload = { completed: newStatus }; // ONLY sending completed status!
+            const startTime = performance.now();
+
+            try {
+                const res = await fetch(url, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                const duration = Math.round(performance.now() - startTime);
+
+                task.completed = newStatus;
+                renderTasks();
+
+                updateInspector('PATCH (Status)', url, payload, data, duration, 200);
+                addLog('PATCH', url, payload, data, 200, duration);
+                showToast(`Campo 'completed' alterado parcialmente via PATCH!`);
+            } catch (err) {
+                showToast('Erro ao disparar PATCH', 'error');
+            }
+        }
+
+        // PATCH: Partial Update 2 (Inline Title Edit)
+        async function handleInlinePatchTitle(id) {
+            const task = state.tasks.find(t => t.id === id);
+            if (!task) return;
+
+            const newTitle = prompt("PATCH: Digite o novo título (somente o título será atualizado no servidor):", task.title);
+            if (!newTitle || newTitle === task.title) return;
+
+            const url = `${BASE_API_URL}/${id}`;
+            const payload = { title: newTitle }; // ONLY sending title
+            const startTime = performance.now();
+
+            try {
+                const res = await fetch(url, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                const duration = Math.round(performance.now() - startTime);
+
+                task.title = newTitle;
+                renderTasks();
+
+                updateInspector('PATCH (Título)', url, payload, data, duration, 200);
+                addLog('PATCH', url, payload, data, 200, duration);
+                showToast(`Título modificado parcialmente via PATCH!`);
+            } catch (err) {
+                showToast('Erro ao disparar PATCH', 'error');
+            }
+        }
+
+        // DELETE: Remove Item
+        async function handleDeleteTask(id) {
+            if (!confirm(`Tem certeza que deseja executar DELETE no recurso #${id}?`)) return;
+
+            const url = `${BASE_API_URL}/${id}`;
+            const startTime = performance.now();
+
+            try {
+                const res = await fetch(url, { method: 'DELETE' });
+                const duration = Math.round(performance.now() - startTime);
+
+                // Animate element removal
+                const card = document.getElementById(`task-card-${id}`);
+                if (card) {
+                    card.classList.add('opacity-0', 'scale-95');
+                    setTimeout(() => {
+                        state.tasks = state.tasks.filter(t => t.id !== id);
+                        renderTasks();
+                    }, 200);
+                }
+
+                const responseInfo = { status: 204, message: 'Resource successfully deleted (No Content)' };
+                updateInspector('DELETE', url, null, responseInfo, duration, 204);
+                addLog('DELETE', url, null, responseInfo, 204, duration);
+                showToast(`Recurso #${id} removido via DELETE (204 No Content)!`);
+            } catch (err) {
+                showToast('Erro ao disparar DELETE', 'error');
+            }
+        }
+
+        // Update Inspector Box
+        function updateInspector(method, url, requestPayload, responseData, duration = 0, status = 200) {
+            const badge = document.getElementById('inspector-badge');
+            const content = document.getElementById('inspector-content');
+
+            let badgeBg = 'bg-slate-500';
+            if (method.includes('GET')) badgeBg = 'bg-emerald-500';
+            if (method.includes('POST')) badgeBg = 'bg-blue-500';
+            if (method.includes('PUT')) badgeBg = 'bg-amber-500';
+            if (method.includes('PATCH')) badgeBg = 'bg-purple-500';
+            if (method.includes('DELETE')) badgeBg = 'bg-rose-500';
+
+            badge.className = `px-2 py-0.5 text-[10px] font-extrabold rounded text-white ${badgeBg}`;
+            badge.textContent = method;
+
+            content.innerHTML = `
+                <div>
+                    <span class="text-slate-400 font-mono text-[10px]">Endpoint Executado:</span>
+                    <p class="font-mono text-slate-700 dark:text-slate-300 font-semibold truncate break-all">${url}</p>
+                </div>
+
+                ${requestPayload ? `
+                <div>
+                    <span class="text-slate-400 font-mono text-[10px]">Payload Enviado (Corpo):</span>
+                    <pre class="bg-slate-900 text-slate-200 p-2 rounded text-[11px] overflow-x-auto max-h-32 mt-1">${syntaxHighlight(requestPayload)}</pre>
+                </div>` : '<p class="text-[11px] text-slate-400 italic">Sem payload no corpo da requisição.</p>'}
+
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-slate-400 font-mono text-[10px]">Resposta do Servidor:</span>
+                        <span class="text-[10px] font-mono text-emerald-500 font-bold">${status} OK (${duration} ms)</span>
+                    </div>
+                    <pre class="bg-slate-900 text-slate-200 p-2 rounded text-[11px] overflow-x-auto max-h-36">${syntaxHighlight(responseData)}</pre>
+                </div>
+            `;
+        }
+
+        /* --- STREAMING_CHUNK:Building REST API Playground Logic... --- */
+        /* REST API Playground Logic */
+
+        function updateMethodStyle() {
+            const select = document.getElementById('pg-method');
+            const val = select.value;
+
+            select.className = "border-2 font-extrabold text-xs px-3 py-2.5 rounded-lg focus:outline-none transition-colors bg-slate-100 dark:bg-slate-900 ";
+
+            if (val === 'GET') select.classList.add('border-emerald-500', 'text-emerald-600', 'dark:text-emerald-400');
+            if (val === 'POST') select.classList.add('border-blue-500', 'text-blue-600', 'dark:text-blue-400');
+            if (val === 'PUT') select.classList.add('border-amber-500', 'text-amber-600', 'dark:text-amber-400');
+            if (val === 'PATCH') select.classList.add('border-purple-500', 'text-purple-600', 'dark:text-purple-400');
+            if (val === 'DELETE') select.classList.add('border-rose-500', 'text-rose-600', 'dark:text-rose-400');
+        }
+
+        function switchPgReqTab(tab) {
+            document.getElementById('pg-req-panel-body').classList.toggle('hidden', tab !== 'body');
+            document.getElementById('pg-req-panel-headers').classList.toggle('hidden', tab !== 'headers');
+
+            const bodyTabBtn = document.getElementById('pg-req-tab-body');
+            const headersTabBtn = document.getElementById('pg-req-tab-headers');
+
+            if (tab === 'body') {
+                bodyTabBtn.className = "px-4 py-2 text-xs font-bold text-blue-600 border-b-2 border-blue-600 transition";
+                headersTabBtn.className = "px-4 py-2 text-xs font-medium text-slate-500 dark:text-slate-400 transition";
+            } else {
+                headersTabBtn.className = "px-4 py-2 text-xs font-bold text-blue-600 border-b-2 border-blue-600 transition";
+                bodyTabBtn.className = "px-4 py-2 text-xs font-medium text-slate-500 dark:text-slate-400 transition";
+            }
+        }
+
+        function formatPlaygroundJson() {
+            const area = document.getElementById('pg-body');
+            try {
+                const parsed = JSON.parse(area.value);
+                area.value = JSON.stringify(parsed, null, 2);
+                showToast('JSON formatado com sucesso!');
+            } catch (e) {
+                showToast('JSON inválido para formatação', 'error');
+            }
+        }
+
+        function loadPreset() {
+            const preset = document.getElementById('preset-selector').value;
+            const methodEl = document.getElementById('pg-method');
+            const urlEl = document.getElementById('pg-url');
+            const bodyEl = document.getElementById('pg-body');
+
+            if (preset === 'get-users') {
+                methodEl.value = 'GET';
+                urlEl.value = 'https://jsonplaceholder.typicode.com/users';
+            } else if (preset === 'get-user-1') {
+                methodEl.value = 'GET';
+                urlEl.value = 'https://jsonplaceholder.typicode.com/users/1';
+            } else if (preset === 'post-post') {
+                methodEl.value = 'POST';
+                urlEl.value = 'https://jsonplaceholder.typicode.com/posts';
+                bodyEl.value = JSON.stringify({ title: 'Novo Artigo HTTP', body: 'Conteúdo detalhado...', userId: 1 }, null, 2);
+            } else if (preset === 'put-post') {
+                methodEl.value = 'PUT';
+                urlEl.value = 'https://jsonplaceholder.typicode.com/posts/1';
+                bodyEl.value = JSON.stringify({ id: 1, title: 'Título Substituído Integralmente', body: 'Corpo novo', userId: 1 }, null, 2);
+            } else if (preset === 'patch-post') {
+                methodEl.value = 'PATCH';
+                urlEl.value = 'https://jsonplaceholder.typicode.com/posts/1';
+                bodyEl.value = JSON.stringify({ title: 'Apenas Título Atualizado' }, null, 2);
+            } else if (preset === 'delete-post') {
+                methodEl.value = 'DELETE';
+                urlEl.value = 'https://jsonplaceholder.typicode.com/posts/1';
+            }
+
+            updateMethodStyle();
+        }
+
+        async function executePlaygroundRequest() {
+            const method = document.getElementById('pg-method').value;
+            const url = document.getElementById('pg-url').value;
+            const headersRaw = document.getElementById('pg-headers').value;
+            const bodyRaw = document.getElementById('pg-body').value;
+
+            const resStatusEl = document.getElementById('pg-res-status');
+            const resTimeEl = document.getElementById('pg-res-time');
+            const resBodyEl = document.getElementById('pg-res-body');
+            const sendBtn = document.getElementById('pg-send-btn');
+
+            if (!url) {
+                showToast('Por favor, informe uma URL válida', 'error');
+                return;
+            }
+
+            // Parse Headers
+            const headers = {};
+            headersRaw.split('\n').forEach(line => {
+                const parts = line.split(':');
+                if (parts.length >= 2) {
+                    headers[parts[0].trim()] = parts.slice(1).join(':').trim();
+                }
+            });
+
+            // Prepare Request Options
+            const options = { method, headers };
+            let parsedBody = null;
+
+            if (['POST', 'PUT', 'PATCH'].includes(method) && bodyRaw.trim()) {
+                try {
+                    parsedBody = JSON.parse(bodyRaw);
+                    options.body = JSON.stringify(parsedBody);
+                } catch (e) {
+                    showToast('Corpo do JSON possui erro de sintaxe!', 'error');
+                    return;
+                }
+            }
+
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Enviando...`;
+            resBodyEl.innerHTML = `<span class="text-slate-500 italic">Conectando ao servidor...</span>`;
+
+            const startTime = performance.now();
+
+            try {
+                const response = await fetch(url, options);
+                const duration = Math.round(performance.now() - startTime);
+
+                let data;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    data = await response.text();
+                }
+
+                // Render Response
+                resStatusEl.textContent = `${response.status} ${response.statusText || ''}`;
+                resStatusEl.className = `px-2 py-0.5 rounded text-[11px] font-bold ${response.ok ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-rose-950 text-rose-400 border border-rose-800'}`;
+                resTimeEl.textContent = `${duration} ms`;
+
+                resBodyEl.innerHTML = typeof data === 'object' ? syntaxHighlight(data) : escapeHtml(data);
+
+                addLog(method, url, parsedBody, data, response.status, duration);
+                showToast(`Requisição ${method} concluída com Status ${response.status}!`);
+            } catch (err) {
+                const duration = Math.round(performance.now() - startTime);
+                resStatusEl.textContent = `Erro / CORS`;
+                resStatusEl.className = `px-2 py-0.5 rounded text-[11px] font-bold bg-rose-950 text-rose-400 border border-rose-800`;
+                resTimeEl.textContent = `${duration} ms`;
+                resBodyEl.innerHTML = `<span class="text-rose-400">Falha de conexão: ${escapeHtml(err.message)}</span>`;
+
+                addLog(method, url, parsedBody, { error: err.message }, 0, duration);
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Enviar`;
+            }
+        }
+
+        /* --- STREAMING_CHUNK:Building Real-time Console Logging and Utilities... --- */
+        /* Real-Time Request Console Logging */
+
+        function toggleConsole() {
+            const drawer = document.getElementById('console-drawer');
+            state.isConsoleOpen = !state.isConsoleOpen;
+            if (state.isConsoleOpen) {
+                drawer.classList.remove('translate-x-full');
+            } else {
+                drawer.classList.add('translate-x-full');
+            }
+        }
+
+        function addLog(method, url, payload, response, status, duration) {
+            const logEntry = {
+                id: Date.now(),
+                timestamp: new Date().toLocaleTimeString(),
+                method,
+                url,
+                payload,
+                response,
+                status,
+                duration
+            };
+
+            state.logs.unshift(logEntry);
+            updateConsoleBadge();
+            renderConsoleLogs();
+        }
+
+        function updateConsoleBadge() {
+            const badge = document.getElementById('log-badge');
+            badge.textContent = state.logs.length;
+        }
+
+        function clearConsoleLogs() {
+            state.logs = [];
+            updateConsoleBadge();
+            renderConsoleLogs();
+        }
+
+        function renderConsoleLogs() {
+            const container = document.getElementById('console-logs-list');
+            if (state.logs.length === 0) {
+                container.innerHTML = `<p class="text-slate-500 italic text-center py-10">Nenhuma requisição disparada até o momento.</p>`;
+                return;
+            }
+
+            container.innerHTML = state.logs.map(log => `
+                <div class="p-3 bg-slate-800/80 rounded-lg border border-slate-700/60 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2 py-0.5 text-[10px] font-black rounded text-white ${getMethodColor(log.method)}">${log.method}</span>
+                            <span class="text-[11px] font-bold ${log.status >= 200 && log.status < 300 ? 'text-emerald-400' : 'text-rose-400'}">${log.status}</span>
+                        </div>
+                        <div class="text-[10px] text-slate-400">
+                            <span>${log.duration} ms</span> • <span>${log.timestamp}</span>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-slate-300 truncate break-all">${escapeHtml(log.url)}</p>
+                    ${log.payload ? `<details class="text-[10px] text-slate-400"><summary class="cursor-pointer hover:text-slate-200">Ver Payload Enviado</summary><pre class="p-2 bg-slate-950 rounded mt-1 overflow-x-auto text-slate-300">${syntaxHighlight(log.payload)}</pre></details>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function getMethodColor(method) {
+            if (method.includes('GET')) return 'bg-emerald-500';
+            if (method.includes('POST')) return 'bg-blue-500';
+            if (method.includes('PUT')) return 'bg-amber-500';
+            if (method.includes('PATCH')) return 'bg-purple-500';
+            if (method.includes('DELETE')) return 'bg-rose-500';
+            return 'bg-slate-600';
+        }
+
+        /* Helpers & Utilities */
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function copyResponseToClipboard() {
+            const bodyText = document.getElementById('pg-res-body').innerText;
+            document.execCommand('copy');
+            showToast('Resposta copiada para a área de transferência!');
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-5 right-5 z-50 px-4 py-3 rounded-xl text-xs font-bold shadow-2xl text-white transition-all transform translate-y-10 opacity-0 flex items-center gap-2 ${type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'}`;
+            toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation'}"></i> ${escapeHtml(message)}`;
+            
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-10', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-10', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            if (typeof str !== 'string') return str;
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        // Syntax Highlighting for JSON
+        function syntaxHighlight(json) {
+            if (typeof json !== 'string') {
+                json = JSON.stringify(json, undefined, 2);
+            }
+            json = escapeHtml(json);
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                let cls = 'json-number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'json-key';
+                    } else {
+                        cls = 'json-string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'json-boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'json-null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
+    </script>
+</body>
+</html>
