@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lista de Tarefas - API HTTP</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="container">
+    <section class="hero">
+      <span class="tag">ATIVIDADE PBL • BACK-END</span>
+      <h1>Minha Lista de Tarefas</h1>
+      <p>Aplicação desenvolvida com Node.js + Express utilizando GET, POST, PUT, PATCH e DELETE.</p>
+    </section>
+
+    <section class="card">
+      <h2>Nova tarefa</h2>
+      <form id="form-tarefa">
+        <label for="titulo">Título</label>
+        <input id="titulo" name="titulo" type="text" placeholder="Ex.: Estudar para a prova" required>
+
+        <label for="descricao">Descrição</label>
+        <textarea id="descricao" name="descricao" placeholder="Digite uma descrição"></textarea>
+
+        <button type="submit">Adicionar tarefa (POST)</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="section-header">
+        <div>
+          <h2>Tarefas</h2>
+          <p id="status">Carregando...</p>
+        </div>
+        <button id="btn-atualizar" class="secondary">Atualizar (GET)</button>
+      </div>
+      <div id="lista" class="lista"></div>
+    </section>
+
+    <section class="card methods">
+      <h2>Métodos HTTP usados</h2>
+      <div class="method-grid">
+        <div><strong>GET</strong><span>Lista e consulta tarefas.</span></div>
+        <div><strong>POST</strong><span>Cria uma nova tarefa.</span></div>
+        <div><strong>PUT</strong><span>Substitui uma tarefa inteira.</span></div>
+        <div><strong>PATCH</strong><span>Altera apenas um campo.</span></div>
+        <div><strong>DELETE</strong><span>Exclui uma tarefa.</span></div>
+      </div>
+    </section>
+
+    <footer>
+      Projeto avaliativo de Programação Back-End e Versionamento de Código.
+    </footer>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

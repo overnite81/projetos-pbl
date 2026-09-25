@@ -1,0 +1,13 @@
+{
+  "name": "lari-pbl-http-2026",
+  "version": "1.0.0",
+  "description": "Aplicação web avaliativa com GET, POST, PUT, PATCH e DELETE usando Node.js e Express.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
