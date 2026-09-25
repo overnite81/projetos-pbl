@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minha Biblioteca | Controle de Livros</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,sans-serif;background:#f6f0fa;color:#33283d;padding:28px 16px}
+    main{max-width:900px;margin:auto}
+    header{text-align:center;margin:8px 0 28px}
+    header h1{color:#704a91;font-size:clamp(26px,5vw,38px);margin-bottom:10px}
+    header p{color:#776b80;line-height:1.5}
+    .panel{background:#fff;padding:24px;border-radius:18px;margin-bottom:24px;box-shadow:0 8px 25px #3d245b12}
+    h2{color:#704a91;margin-bottom:16px}
+    form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    input,button{font:inherit;border-radius:10px;padding:12px;border:1px solid #ddd1e9}
+    input[type=checkbox]{width:18px;height:18px}
+    .check{display:flex;align-items:center;gap:9px;color:#64566f}
+    button{background:#704a91;color:#fff;border:0;cursor:pointer;font-weight:bold}
+    button:hover{filter:brightness(.95)}
+    .wide{grid-column:1/-1}
+    #mensagem{min-height:24px;color:#704a91;margin:12px 0}
+    .book{background:#fff;border:1px solid #e6dced;border-radius:14px;padding:18px;margin:12px 0;display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
+    .book h3{color:#5d3e7c;margin-bottom:7px;overflow-wrap:anywhere}
+    .book p{color:#766982;margin-bottom:8px}
+    .pill{display:inline-block;background:#f0e7f7;color:#654584;border-radius:30px;padding:5px 10px;font-size:13px}
+    .actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+    .actions button{font-size:13px;padding:9px 11px}
+    .actions .secondary{background:#eee5f5;color:#5c4079}
+    .actions .delete{background:#a85672}
+    .empty{color:#776b80;padding:12px 0}
+    @media(max-width:600px){form{grid-template-columns:1fr}.wide{grid-column:auto}.book{display:block}.actions button{flex:1}}
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>📚 Minha Biblioteca</h1>
+    <p>Organize seus livros, acompanhe suas leituras e cuide da sua coleção.</p>
+  </header>
+
+  <section class="panel">
+    <h2>Adicionar um livro</h2>
+    <form id="formLivro">
+      <input id="titulo" placeholder="Título do livro" maxlength="150" required>
+      <input id="autor" placeholder="Autor(a)" maxlength="120" required>
+      <input id="ano" type="number" min="0" max="2100" placeholder="Ano de publicação (opcional)">
+      <label class="check"><input id="lido" type="checkbox"> Já li este livro</label>
+      <button class="wide" type="submit">Cadastrar livro (POST)</button>
+    </form>
+    <p id="mensagem" role="status"></p>
+  </section>
+
+  <section class="panel">
+    <h2>Minha coleção</h2>
+    <div id="listaLivros"><p class="empty">Carregando...</p></div>
+  </section>
+</main>
+
+<script>
+const API = "/api/livros";
+const formulario = document.querySelector("#formLivro");
+const lista = document.querySelector("#listaLivros");
+const mensagem = document.querySelector("#mensagem");
+
+function avisar(texto){ mensagem.textContent = texto; }
+
+async function requisicao(url, opcoes = {}) {
+  const resposta = await fetch(url, {
+    ...opcoes,
+    headers: { "Content-Type": "application/json", ...(opcoes.headers || {}) }
+  });
+  const dados = await resposta.json();
+  if (!resposta.ok) throw new Error(dados.erro || "Não foi possível concluir a operação.");
+  return dados;
+}
+
+// GET — carregar e exibir a coleção
+async function carregarLivros() {
+  try {
+    const livros = await requisicao(API);
+    lista.replaceChildren();
+
+    if (livros.length === 0) {
+      const vazio = document.createElement("p");
+      vazio.className = "empty";
+      vazio.textContent = "Sua biblioteca está vazia. Cadastre seu primeiro livro!";
+      lista.append(vazio);
+      return;
+    }
+
+    livros.forEach(livro => {
+      const card = document.createElement("article");
+      card.className = "book";
+
+      const info = document.createElement("div");
+      const titulo = document.createElement("h3");
+      titulo.textContent = `${livro.titulo} (#${livro.id})`;
+
+      const autor = document.createElement("p");
+      autor.textContent = `Autor(a): ${livro.autor}`;
+
+      const ano = document.createElement("p");
+      ano.textContent = livro.ano ? `Ano: ${livro.ano}` : "Ano não informado";
+
+      const status = document.createElement("span");
+      status.className = "pill";
+      status.textContent = livro.lido ? "Já lido" : "Ainda não lido";
+
+      const acoes = document.createElement("div");
+      acoes.className = "actions";
+
+      // PATCH — alternar o status de leitura
+      const botaoLido = document.createElement("button");
+      botaoLido.className = "secondary";
+      botaoLido.textContent = livro.lido ? "Marcar não lido (PATCH)" : "Marcar lido (PATCH)";
+      botaoLido.onclick = async () => {
+        try {
+          await requisicao(`${API}/${livro.id}`, {
+            method: "PATCH",
+            body: JSON.stringify({ lido: !livro.lido })
+          });
+          avisar("Status de leitura atualizado.");
+          carregarLivros();
+        } catch (erro) { avisar(erro.message); }
+      };
+
+      // PUT — editar o registro completo
+      const botaoEditar = document.createElement("button");
+      botaoEditar.className = "secondary";
+      botaoEditar.textContent = "Editar (PUT)";
+      botaoEditar.onclick = async () => {
+        const novoTitulo = prompt("Título:", livro.titulo);
+        if (novoTitulo === null) return;
+        const novoAutor = prompt("Autor(a):", livro.autor);
+        if (novoAutor === null) return;
+        const novoAno = prompt("Ano (opcional):", livro.ano || "");
+        if (novoAno === null) return;
+        try {
+          await requisicao(`${API}/${livro.id}`, {
+            method: "PUT",
+            body: JSON.stringify({
+              titulo: novoTitulo,
+              autor: novoAutor,
+              ano: novoAno,
+              lido: livro.lido
+            })
+          });
+          avisar("Livro editado.");
+          carregarLivros();
+        } catch (erro) { avisar(erro.message); }
+      };
+
+      // DELETE — remover o registro
+      const botaoExcluir = document.createElement("button");
+      botaoExcluir.className = "delete";
+      botaoExcluir.textContent = "Excluir (DELETE)";
+      botaoExcluir.onclick = async () => {
+        if (!confirm(`Deseja excluir "${livro.titulo}"?`)) return;
+        try {
+          await requisicao(`${API}/${livro.id}`, { method: "DELETE" });
+          avisar("Livro excluído.");
+          carregarLivros();
+        } catch (erro) { avisar(erro.message); }
+      };
+
+      acoes.append(botaoLido, botaoEditar, botaoExcluir);
+      info.append(titulo, autor, ano, status, acoes);
+      card.append(info);
+      lista.append(card);
+    });
+  } catch (erro) {
+    avisar(erro.message);
+    lista.textContent = "Não foi possível carregar os livros. Verifique se o servidor está ligado.";
+  }
+}
+
+// POST — cadastrar livro novo
+formulario.addEventListener("submit", async evento => {
+  evento.preventDefault();
+  const livro = {
+    titulo: document.querySelector("#titulo").value.trim(),
+    autor: document.querySelector("#autor").value.trim(),
+    ano: document.querySelector("#ano").value,
+    lido: document.querySelector("#lido").checked
+  };
+
+  try {
+    await requisicao(API, { method: "POST", body: JSON.stringify(livro) });
+    formulario.reset();
+    avisar("Livro cadastrado com sucesso!");
+    carregarLivros();
+  } catch (erro) { avisar(erro.message); }
+});
+
+carregarLivros();
+</script>
+</body>
+</html>
