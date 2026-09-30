@@ -1,0 +1,182 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background-color: #fff6ea;
+}
+
+/* Banner */
+.banner {
+  width: 100%;
+  height: 350px;
+  background: url('Fotos/Banners/banner.jpeg') no-repeat center center;
+  background-size: cover;
+  background-position: 50% 83%;
+}
+
+.banner1 {
+  width: 100%;
+  height:410px;
+  background: url('Fotos/Banners/banner1.png') no-repeat center center;
+  background-size: cover;
+  background-position: 50% 53%;
+}
+
+.banner2 {
+  width: 100%;
+  height: auto; /* deixa a altura flexível */
+  background-color: #f0f0f0; /* fundo neutro */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px;
+}
+
+.logos {
+  display: flex;
+  flex-wrap: wrap; /* permite quebrar linha */
+  gap: 20px; /* espaço entre logos */
+  justify-content: center;
+  width: 70%;
+}
+
+.logos img {
+  height: 70px; /* tamanho padrão das logos */
+  object-fit: contain;
+}
+
+.unico {
+  align-items: center;
+}
+
+/* Seções alternadas */
+.section {
+  display: flex;
+  align-items: center;
+  background-color: #fff6ea;
+  padding: 50px;
+
+}
+
+.section:nth-child(even) {
+  flex-direction: row-reverse;
+  background-color: #ffeeda;
+}
+
+.text {
+  flex: 1;
+  color: #000000;
+  padding: 20px;
+}
+
+.text-unico {
+  flex: 1;
+  padding: 40px;
+  text-align: center;
+  color:#000000
+}
+
+.image {
+  flex: 1;
+  width: 100%;            /* Corrigido de 300 para 100% para ocupar o lado dela */
+  display: flex;          /* Transforma em flexbox para alinhar o conteúdo */
+  justify-content: center; /* Centraliza a imagem na horizontal */
+  align-items: center;     /* Centraliza a imagem na vertical */
+}
+
+
+/* 1. Alinhamento do bloco da imagem (Mantém centralizado e organizado) */
+.image {
+  flex: 1;
+  width: 100%;            
+  display: flex;          
+  justify-content: center; 
+  align-items: center;     
+}
+
+/* 2. Propriedades da Imagem Quadrada + Configuração da Animação */
+.image img {
+  /* Mantém o tamanho e formato quadrado perfeito que você aprovou */
+  width: 300px;           
+  max-width: 100%;        
+  aspect-ratio: 1 / 1;    
+  object-fit: cover;      
+  border-radius: 8px;     
+
+  /* CONFIGURAÇÃO DA ANIMAÇÃO (Estado Inicial: invisível e à esquerda) */
+  opacity: 0;
+  transform: translateX(-60px); 
+  transition: opacity 1s ease, transform 1s ease; /* Transição suave */
+}
+
+/* 3. Estado Ativo (Disparado pelo JavaScript ao rolar a página) */
+.image img.show-image {
+  opacity: 1;
+  transform: translateX(0); /* Volta para a posição quadrada e centralizada */
+}
+
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .section {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .text, .image {
+    flex: none;
+    width: 100%;
+    padding: 10px;
+  }
+
+  .image img {
+    max-width: 90%;
+  }
+}
+
+nav {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  background-color: #ffe6c8;
+  padding: 10px;
+}
+
+.btn-nav {
+  text-decoration: none;
+  color: white;
+  background: linear-gradient(90deg, #ff6600, #ff8533);
+  padding: 12px 25px;
+  border-radius: 30px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.btn-nav:hover {
+  background: linear-gradient(90deg, #ff8533, #ff6600);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 10px rgba(0,0,0,0.4);
+}
+
+/* Digitação */
+/* Mantém a formatação visual antiga do título, mesmo sem o efeito de digitação */
+.fade.nao-digitar {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+
+/* Fade-in */
+.fade {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 1s ease;
+}
+
+.fade.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
