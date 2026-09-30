@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>API HTTP - CRUD de Usuários</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="container">
+            <h1>API HTTP</h1>
+            <p>GET • POST • PUT • PATCH • DELETE</p>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <section class="intro">
+            <h2>Gerenciamento de Usuários</h2>
+
+            <p>
+                Esta aplicação demonstra o funcionamento dos principais
+                métodos HTTP utilizando Node.js e Express.
+            </p>
+        </section>
+
+        <section class="methods">
+
+            <div class="method get">
+                <strong>GET</strong>
+                <span>Consultar usuários</span>
+            </div>
+
+            <div class="method post">
+                <strong>POST</strong>
+                <span>Criar usuário</span>
+            </div>
+
+            <div class="method put">
+                <strong>PUT</strong>
+                <span>Substituir usuário</span>
+            </div>
+
+            <div class="method patch">
+                <strong>PATCH</strong>
+                <span>Atualizar parcialmente</span>
+            </div>
+
+            <div class="method delete">
+                <strong>DELETE</strong>
+                <span>Excluir usuário</span>
+            </div>
+
+        </section>
+
+        <section class="card">
+
+            <h2>Novo usuário</h2>
+
+            <form id="formUsuario">
+
+                <div class="form-group">
+                    <label for="nome">Nome</label>
+                    <input
+                        type="text"
+                        id="nome"
+                        placeholder="Digite o nome"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input
+                        type="email"
+                        id="email"
+                        placeholder="Digite o email"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="btn btn-post">
+                    POST - Criar usuário
+                </button>
+
+            </form>
+
+        </section>
+
+        <section class="card">
+
+            <div class="section-title">
+                <h2>Usuários cadastrados</h2>
+
+                <button
+                    id="btnAtualizar"
+                    class="btn btn-get"
+                >
+                    GET - Atualizar lista
+                </button>
+            </div>
+
+            <div id="listaUsuarios">
+                Carregando usuários...
+            </div>
+
+        </section>
+
+        <section class="card">
+
+            <h2>Resultado da requisição</h2>
+
+            <pre id="resultado">Nenhuma requisição realizada.</pre>
+
+        </section>
+
+    </main>
+
+    <footer>
+        <p>Projeto acadêmico - Métodos HTTP</p>
+    </footer>
+
+    <script src="script.js"></script>
+
+</body>
+</html>
