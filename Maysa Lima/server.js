@@ -1,0 +1,12 @@
+const express = require("express");
+const app = express();
+const PORT = 3000;
+app.use(express.json());
+app.use(express.static(__dirname));
+let usuario = { id: 1, nome: "Maria" };
+app.get("/usuario", (req,res)=>res.json(usuario));
+app.post("/usuario", (req,res)=>{ usuario=req.body; res.json({mensagem:"Usuário criado com sucesso",usuario});});
+app.put("/usuario", (req,res)=>{ usuario=req.body; res.json({mensagem:"Usuário atualizado completamente",usuario});});
+app.patch("/usuario", (req,res)=>{ usuario={...usuario,...req.body}; res.json({mensagem:"Usuário atualizado parcialmente",usuario});});
+app.delete("/usuario", (req,res)=>{ usuario=null; res.json({mensagem:"Usuário removido"});});
+app.listen(PORT, ()=>console.log(`Servidor rodando em http://localhost:${PORT}`));

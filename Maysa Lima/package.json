@@ -1,0 +1,12 @@
+{
+  "name": "altamir_gomes_ra123456",
+  "version": "1.0.0",
+  "description": "Atividade de Back-End",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
