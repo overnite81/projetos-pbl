@@ -1,0 +1,12 @@
+{
+  "name": "tassiely-cristina-api",
+  "version": "1.0.0",
+  "description": "Projeto acadêmico para demonstrar os métodos HTTP GET, POST, PUT, PATCH e DELETE com Express.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

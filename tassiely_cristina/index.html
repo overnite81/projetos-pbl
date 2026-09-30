@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API de Usuários</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="container">
+    <h1>API de Usuários</h1>
+    <p>Projeto acadêmico para demonstrar os métodos HTTP GET, POST, PUT, PATCH e DELETE.</p>
+
+    <section class="card">
+      <h2>Testar API</h2>
+
+      <div class="form-grid">
+        <label>
+          ID
+          <input id="id" type="number" placeholder="1">
+        </label>
+
+        <label>
+          Nome
+          <input id="nome" type="text" placeholder="Maria">
+        </label>
+      </div>
+
+      <div class="buttons">
+        <button onclick="listar()">GET</button>
+        <button onclick="criar()">POST</button>
+        <button onclick="atualizar()">PUT</button>
+        <button onclick="alterar()">PATCH</button>
+        <button onclick="excluir()">DELETE</button>
+      </div>
+
+      <pre id="resultado">Resultado aparecerá aqui...</pre>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
