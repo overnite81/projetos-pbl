@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerenciador de Tarefas</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>Gerenciador de Tarefas</h1>
+      <p>Exemplo de aplicação usando GET, POST, PUT, PATCH e DELETE.</p>
+    </header>
+
+    <section class="card">
+      <h2>Nova tarefa</h2>
+      <form id="taskForm">
+        <input id="taskTitle" type="text" placeholder="Digite uma tarefa" required>
+        <button type="submit">Adicionar</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="section-title">
+        <h2>Tarefas</h2>
+        <button id="refreshButton" class="secondary">Atualizar</button>
+      </div>
+      <div id="message" class="message"></div>
+      <div id="taskList"></div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

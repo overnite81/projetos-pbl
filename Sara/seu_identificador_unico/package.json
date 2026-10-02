@@ -1,0 +1,22 @@
+{
+  "name": "atividade-backend-http",
+  "version": "1.0.0",
+  "description": "Aplicação web para atividade de Programação Back-End e Versionamento de Código.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "nodejs",
+    "express",
+    "http",
+    "git",
+    "github"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
