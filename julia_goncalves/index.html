@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Usuários</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main class="container">
+        <h1>Cadastro de Usuários</h1>
+
+        <p class="descricao">
+            Aplicação desenvolvida para demonstrar os métodos HTTP
+            GET, POST, PUT, PATCH e DELETE.
+        </p>
+
+        <section class="card">
+            <h2>Novo usuário</h2>
+
+            <form id="formUsuario">
+                <input type="text" id="nome" placeholder="Nome" required>
+                <input type="email" id="email" placeholder="E-mail" required>
+                <button type="submit">Cadastrar (POST)</button>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>Usuários cadastrados</h2>
+            <div id="listaUsuarios">Carregando usuários...</div>
+        </section>
+
+        <section class="card metodos">
+            <h2>Métodos utilizados</h2>
+
+            <div class="metodo"><strong>GET</strong><span>Lista os usuários cadastrados.</span></div>
+            <div class="metodo"><strong>POST</strong><span>Cadastra um novo usuário.</span></div>
+            <div class="metodo"><strong>PUT</strong><span>Substitui os dados completos de um usuário.</span></div>
+            <div class="metodo"><strong>PATCH</strong><span>Altera apenas uma informação do usuário.</span></div>
+            <div class="metodo"><strong>DELETE</strong><span>Exclui um usuário.</span></div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

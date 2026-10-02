@@ -1,0 +1,14 @@
+{
+    "name": "cadastro-usuarios",
+    "version": "1.0.0",
+    "description": "Aplicação web para demonstrar os métodos HTTP GET, POST, PUT, PATCH e DELETE.",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "author": "Julia Goncalves",
+    "license": "ISC",
+    "dependencies": {
+        "express": "^5.1.0"
+    }
+}
