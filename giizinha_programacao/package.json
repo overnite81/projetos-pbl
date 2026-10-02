@@ -1,0 +1,12 @@
+{
+  "name": "giizinha_programacao",
+  "version": "1.0.0",
+  "description": "Atividade de Programação Back-End e Versionamento de Código",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
