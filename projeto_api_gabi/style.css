@@ -1,0 +1,89 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f4f1f8;
+  color: #292331;
+}
+
+.container {
+  width: min(900px, 92%);
+  margin: 40px auto;
+}
+
+h1 {
+  margin-bottom: 5px;
+}
+
+.subtitulo {
+  color: #6d6677;
+  margin-top: 0;
+}
+
+.card {
+  background: white;
+  padding: 22px;
+  border-radius: 14px;
+  margin: 20px 0;
+  box-shadow: 0 4px 14px rgba(0,0,0,.08);
+}
+
+.form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+input {
+  flex: 1;
+  min-width: 150px;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+button {
+  border: 0;
+  border-radius: 8px;
+  padding: 12px 18px;
+  background: #6c4bb6;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: .9;
+}
+
+.secundario {
+  background: #555;
+}
+
+.patch {
+  background: #b36b00;
+}
+
+.titulo-lista {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.usuario {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.usuario:last-child {
+  border-bottom: 0;
+}
+
+.excluir {
+  background: #c0392b;
+}

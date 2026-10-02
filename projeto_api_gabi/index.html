@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerenciador de Usuários</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="container">
+    <h1>Gerenciador de Usuários</h1>
+    <p class="subtitulo">API com GET, POST, PUT, PATCH e DELETE</p>
+
+    <section class="card">
+      <h2>Adicionar usuário</h2>
+      <div class="form">
+        <input id="nome" type="text" placeholder="Nome do usuário">
+        <button onclick="adicionarUsuario()">Adicionar</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="titulo-lista">
+        <h2>Usuários cadastrados</h2>
+        <button class="secundario" onclick="carregarUsuarios()">Atualizar</button>
+      </div>
+      <div id="lista">Carregando...</div>
+    </section>
+
+    <section class="card">
+      <h2>Testar PUT / PATCH</h2>
+      <div class="form">
+        <input id="idEdicao" type="number" placeholder="ID">
+        <input id="nomeEdicao" type="text" placeholder="Novo nome">
+        <button onclick="atualizarUsuario()">PUT</button>
+        <button class="patch" onclick="alterarParcial()">PATCH</button>
+      </div>
+    </section>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

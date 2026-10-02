@@ -1,0 +1,12 @@
+{
+  "name": "projeto-api-gabi",
+  "version": "1.0.0",
+  "description": "Projeto avaliativo de Programação Back-End e Versionamento de Código",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
